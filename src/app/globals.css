@@ -1,0 +1,6 @@
+/* src/app/globals.css */
+@import "tailwindcss";
+
+body {
+  background-color: #f3f5f7; 
+}
