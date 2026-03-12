@@ -20,38 +20,38 @@ function VerifyForm() {
   });
 
   const onSubmit = async (data: VerifyFormValues) => {
-    if (!token || !email) return setErrorMsg("Invalid link parameters.");
+    if (!token || !email) return setErrorMsg("Link verifikasi tidak valid.");
     try {
       setErrorMsg("");
-      await api.post("/verify", { email, token, password: data.password });
-      router.push("/login?verified=true"); // Redirect to login on success
+      await api.post("/auth/verify", { email, token, password: data.password });
+      router.push("/login?verified=true");
     } catch (error: any) {
-      setErrorMsg(error.response?.data?.message || "Verification failed");
+      setErrorMsg(error.response?.data?.message || "Verifikasi gagal");
     }
   };
 
   return (
-    <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
-      <h1 className="text-2xl font-bold text-center">Set Your Password</h1>
-      <p className="text-sm text-center text-gray-600">Verifying: {email}</p>
+    <div className="w-full p-8 space-y-6 bg-white rounded-xl shadow-sm border border-[#f3f5f7]">
+      <h1 className="text-2xl font-bold text-center text-[#1a1a1a]">Buat Password</h1>
+      <p className="text-sm text-center text-[#8e8e8e]">Memverifikasi: <span className="text-[#1a1a1a] font-medium">{email}</span></p>
       
-      {errorMsg && <div className="p-3 text-sm text-red-500 bg-red-100 rounded">{errorMsg}</div>}
+      {errorMsg && <div className="p-3 text-sm text-red-600 bg-red-50 rounded-md font-medium">{errorMsg}</div>}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium">New Password</label>
-          <input type="password" {...register("password")} className="w-full p-2 mt-1 border rounded" />
+          <label className="block text-sm font-medium text-[#1a1a1a]">Password Baru</label>
+          <input type="password" {...register("password")} className="w-full p-2.5 mt-1 border border-gray-200 rounded-md focus:ring-2 focus:ring-[#59cfb7] outline-none text-[#1a1a1a]" />
           {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium">Confirm Password</label>
-          <input type="password" {...register("confirmPassword")} className="w-full p-2 mt-1 border rounded" />
+          <label className="block text-sm font-medium text-[#1a1a1a]">Konfirmasi Password</label>
+          <input type="password" {...register("confirmPassword")} className="w-full p-2.5 mt-1 border border-gray-200 rounded-md focus:ring-2 focus:ring-[#59cfb7] outline-none text-[#1a1a1a]" />
           {errors.confirmPassword && <p className="mt-1 text-xs text-red-500">{errors.confirmPassword.message}</p>}
         </div>
 
-        <button type="submit" disabled={isSubmitting} className="w-full py-2 text-white bg-green-600 rounded hover:bg-green-700">
-          {isSubmitting ? "Saving..." : "Set Password & Login"}
+        <button type="submit" disabled={isSubmitting} className="w-full py-2.5 text-white font-bold bg-[#00997a] rounded-md hover:bg-[#00997a]/90 transition-colors disabled:opacity-50">
+          {isSubmitting ? "Menyimpan..." : "Simpan & Masuk"}
         </button>
       </form>
     </div>
@@ -60,10 +60,12 @@ function VerifyForm() {
 
 export default function VerifyPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center p-4 bg-gray-50">
-      <Suspense fallback={<div>Loading verification data...</div>}>
-        <VerifyForm />
-      </Suspense>
+    <main className="flex min-h-screen items-center justify-center p-4 bg-[#f3f5f7]">
+      <div className="w-full max-w-md">
+        <Suspense fallback={<div className="text-center text-[#8e8e8e]">Memuat data...</div>}>
+          <VerifyForm />
+        </Suspense>
+      </div>
     </main>
   );
 }
