@@ -1,5 +1,5 @@
 // src/components/Header.tsx
-import { useAppStore } from "@/store/useAppStore";
+import { useAppStore } from "@/stores/useAppStore";
 import Link from "next/link";
 
 export default function Header() {

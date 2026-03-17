@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 import { useGeolocation } from "./useGeolocation";
 import { api } from "@/lib/axiosInstance";
-import { useAppStore } from "@/store/useAppStore";
+import { useAppStore } from "@/stores/useAppStore";
 
 export const useNearestStoreFetch = () => {
   const { location, error, requestLocation } = useGeolocation();
