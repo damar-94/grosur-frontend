@@ -1,47 +1,68 @@
-// src/components/Header.tsx
+"use client";
+
 import { useAppStore } from "@/stores/useAppStore";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { api } from "@/lib/axiosInstance";
 
 export default function Header() {
-  const { nearestStore, user, logout } = useAppStore();
+  const { user, logout } = useAppStore();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      // 1. Call backend to clear the cookie
+      await api.post("/auth/logout");
+      // 2. Clear Zustand state
+      logout();
+      // 3. Go home
+      router.push("/login");
+    } catch (error) {
+      console.error("Logout failed", error);
+    }
+  };
 
   return (
-    <header className="sticky top-0 z-50 bg-white shadow-sm">
-      <div className="flex items-center justify-between p-4 bg-[#00997a] text-white">
-        
-        {/* Location Section */}
-        <div className="text-xs">
-          <p className="opacity-90">Dikirim ke:</p>
-          <p className="font-bold text-sm truncate w-32 md:w-48">
-            {nearestStore ? nearestStore.name : "Mencari lokasi..."}
-          </p>
-        </div>
+    <header className="flex items-center justify-between p-4 bg-white shadow-sm border-b">
+      <Link href="/" className="text-xl font-bold text-[#00997a]">
+        Grosur
+      </Link>
 
-        {/* Auth & Cart Section */}
-        <div className="flex items-center space-x-3">
-          {user ? (
-            <div className="flex items-center space-x-2 text-xs">
-              <span className="hidden md:inline font-medium">Hai, {user.email.split('@')[0]}</span>
-              <button onClick={logout} className="opacity-80 hover:opacity-100 transition-opacity">Keluar</button>
-            </div>
-          ) : (
-            <Link href="/login" className="bg-white text-[#00997a] px-3 py-1 rounded-full text-xs font-bold hover:bg-[#f3f5f7] transition-colors">
+      <nav className="flex items-center gap-6">
+        {user ? (
+          <>
+            {/* Conditional Admin Link */}
+            {(user.role === "SUPER_ADMIN" || user.role === "STORE_ADMIN") && (
+              <Link href="/admin/dashboard" className="text-sm font-medium hover:text-[#00997a]">
+                Dashboard
+              </Link>
+            )}
+
+            <Link href="/profile" className="text-sm font-medium">
+              {user.email}
+            </Link>
+
+            <button
+              onClick={handleLogout}
+              className="text-sm font-bold text-red-500 hover:underline"
+            >
+              Keluar
+            </button>
+          </>
+        ) : (
+          <>
+            <Link href="/login" className="text-sm font-medium hover:text-[#00997a]">
               Masuk
             </Link>
-          )}
-          <button aria-label="Cart" className="text-xl">🛒</button>
-        </div>
-
-      </div>
-
-      {/* Search Bar */}
-      <div className="p-3 bg-white border-b border-[#f3f5f7]">
-        <input
-          type="text"
-          placeholder="Cari sayur, buah, daging..."
-          className="w-full p-2.5 text-sm bg-[#f3f5f7] text-[#1a1a1a] placeholder-[#8e8e8e] border-none rounded-md focus:ring-2 focus:ring-[#59cfb7] outline-none"
-        />
-      </div>
+            <Link
+              href="/register"
+              className="px-4 py-2 text-sm font-bold text-white bg-[#00997a] rounded-md"
+            >
+              Daftar
+            </Link>
+          </>
+        )}
+      </nav>
     </header>
   );
 }
