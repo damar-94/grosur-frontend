@@ -1,4 +1,3 @@
-// src/hooks/useGeolocation.ts
 import { useState } from "react";
 
 type GeoLocation = { lat: number; lng: number } | null;
@@ -6,14 +5,14 @@ type GeoLocation = { lat: number; lng: number } | null;
 export const useGeolocation = () => {
   const [location, setLocation] = useState<GeoLocation>(null);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Start true to prevent premature fetching
 
   const requestLocation = () => {
     if (!navigator.geolocation) {
       setError("Geolocation not supported.");
-      return;
+      return setLoading(false);
     }
-    setLoading(true);
+
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
