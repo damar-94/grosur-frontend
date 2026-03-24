@@ -1,8 +1,7 @@
 // src/app/layout.tsx
 import type { Metadata } from "next";
-
-// ADD THIS LINE BACK IN!
-import "./globals.css"; 
+import { GoogleOAuthProvider } from "@react-oauth/google";
+import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Online Grocery App",
@@ -17,7 +16,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        {children}
+        {/* Wrap the children with the Google Provider */}
+        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}>
+          {children}
+        </GoogleOAuthProvider>
       </body>
     </html>
   );
