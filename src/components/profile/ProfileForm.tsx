@@ -47,7 +47,12 @@ export default function ProfileForm() {
 
         try {
             const res = await api.patch("/users/profile", formData, {
-                headers: { "Content-Type": "multipart/form-data" },
+                headers: {
+                    "Content-Type": "multipart/form-data"
+                },
+                // CRITICAL FIX: This tells the browser to send the HttpOnly 
+                // auth cookie along with the image file.
+                withCredentials: true,
             });
 
             // Update global state with the fresh user data
@@ -55,6 +60,7 @@ export default function ProfileForm() {
             setMessage("Profil berhasil diperbarui!");
             setFile(null); // Reset file input
         } catch (error: any) {
+            console.error(error); // Helpful for debugging if it fails again
             setMessage(error.response?.data?.message || "Terjadi kesalahan.");
         } finally {
             setIsLoading(false);
