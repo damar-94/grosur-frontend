@@ -12,12 +12,18 @@ export default function AdminLayout({
   return (
     <TooltipProvider delayDuration={0}>
       <SidebarProvider>
-        <AdminSidebar />
-        <SidebarInset className="flex flex-col min-w-0 h-screen overflow-hidden bg-gray-50 pb-16 md:pb-0">
+        <div className="flex min-h-screen flex-col w-full">
           <AdminHeader />
-          <main className="flex-1 p-6 overflow-auto">{children}</main>
-          <BottomNav />
-        </SidebarInset>
+          <div className="flex flex-1 overflow-hidden">
+            <AdminSidebar />
+            <SidebarInset className="flex-1 flex flex-col bg-gray-50">
+              <main className="flex-1 p-6 pb-20 md:pb-6 overflow-auto">
+                {children}
+              </main>
+              <BottomNav />
+            </SidebarInset>
+          </div>
+        </div>
       </SidebarProvider>
     </TooltipProvider>
   );
