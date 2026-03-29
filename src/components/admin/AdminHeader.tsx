@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Menu, Search, Bell, LogOut, User } from "lucide-react";
+import { Search, Bell, LogOut, User } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,8 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader } from "@/components/ui/sheet";
-import Sidebar from "./Sidebar";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export function AdminHeader() {
   return (
@@ -24,22 +23,7 @@ export function AdminHeader() {
       <div className="flex h-16 items-center px-4 md:px-6 gap-4">
         {/* Left: Logo and Mobile Hamburger */}
         <div className="flex items-center gap-2 md:gap-4 shrink-0">
-          <div className="md:hidden">
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Menu className="h-5 w-5" />
-                  <span className="sr-only">Toggle menu</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="p-0 w-64 border-none">
-                <SheetHeader className="sr-only">
-                  <SheetTitle>Menu Sidebar</SheetTitle>
-                </SheetHeader>
-                <Sidebar />
-              </SheetContent>
-            </Sheet>
-          </div>
+          <SidebarTrigger className="h-9 w-9 -ml-2" />
           <div className="hidden md:flex items-center gap-2 font-bold text-lg text-primary">
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
               G
