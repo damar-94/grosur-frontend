@@ -29,12 +29,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id">
-      {/* Notice the flex classes here: 
-        min-h-screen ensures the footer is pushed to the bottom even if the page is empty 
-      */}
       <body className={`${montserrat.variable} ${poppins.variable} font-sans antialiased bg-background text-foreground flex flex-col min-h-screen`}>
         <Navbar />
-        <main className="flex-grow">
+        {/* ADDED: pb-20 on mobile to prevent content hiding behind the bottom nav */}
+        <main className="flex-grow pb-20 md:pb-0">
           {children}
         </main>
         <Footer />
