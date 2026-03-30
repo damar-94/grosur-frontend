@@ -1,15 +1,23 @@
-// src/app/layout.tsx
 import type { Metadata } from "next";
-import { GoogleOAuthProvider } from "@react-oauth/google";
+import { Montserrat, Poppins } from "next/font/google";
 import "./globals.css";
-import { Figtree } from "next/font/google";
-import { cn } from "@/lib/utils";
 
-const figtree = Figtree({subsets:['latin'],variable:'--font-sans'});
+// Configure Montserrat
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
+  subsets: ["latin"],
+});
+
+// Configure Poppins
+const poppins = Poppins({
+  variable: "--font-poppins",
+  weight: ["400", "500", "600", "700"],
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
-  title: "Online Grocery App",
-  description: "Shop from your nearest grocery store",
+  title: "E-Commerce App",
+  description: "Belanja Kebutuhan Harian",
 };
 
 export default function RootLayout({
@@ -18,12 +26,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("font-sans", figtree.variable)}>
-      <body className="antialiased">
-        {/* Wrap the children with the Google Provider */}
-        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}>
-          {children}
-        </GoogleOAuthProvider>
+    <html lang="id">
+      <body className={`${montserrat.variable} ${poppins.variable} font-sans antialiased bg-background text-foreground`}>
+        {children}
       </body>
     </html>
   );
