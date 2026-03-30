@@ -1,26 +1,118 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
+@custom-variant dark (&:is(.dark *));
+
+/* SHADCN & TEAM COLOR VARIABLES 
+   Based on: https://coolors.co/1a1a1a-8e8e8e-59cfb7-00997a-282926-f3f5f7
+*/
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Brand Colors */
+  --primary: #00997a;
+  /* Brand Deep Green */
+  --primary-foreground: #ffffff;
+
+  --accent: #59cfb7;
+  /* Mint Green Highlights */
+  --accent-foreground: #1a1a1a;
+
+  /* Layout Colors */
+  --background: #f3f5f7;
+  /* Soft gray background (Blibli style) */
+  --foreground: #1a1a1a;
+  /* Near black text */
+
+  --card: #ffffff;
+  /* White cards */
+  --card-foreground: #1a1a1a;
+
+  --popover: #ffffff;
+  --popover-foreground: #1a1a1a;
+
+  --secondary: #282926;
+  /* Dark Charcoal for Footer */
+  --secondary-foreground: #ffffff;
+
+  /* Muted / Borders */
+  --muted: #e2e8f0;
+  /* Subtle backgrounds */
+  --muted-foreground: #8e8e8e;
+  /* Gray secondary text */
+
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #00997a;
+  /* Green focus ring */
+
+  /* Shadcn Utility Colors */
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+
+  /* Blibli uses slightly rounded, friendly corners */
+  --radius: 0.75rem;
 }
 
+/* Dark Mode Fallbacks (if your team decides to use dark mode later) */
+.dark {
+  --background: #1a1a1a;
+  --foreground: #f3f5f7;
+  --card: #282926;
+  --card-foreground: #f3f5f7;
+  --popover: #282926;
+  --popover-foreground: #f3f5f7;
+  --primary: #59cfb7;
+  --primary-foreground: #1a1a1a;
+  --secondary: #282926;
+  --secondary-foreground: #f3f5f7;
+  --muted: #282926;
+  --muted-foreground: #8e8e8e;
+  --accent: #00997a;
+  --accent-foreground: #ffffff;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #282926;
+  --input: #282926;
+  --ring: #59cfb7;
+}
+
+/* TAILWIND V4 THEME CONFIGURATION (Inline mapping for Shadcn) */
 @theme inline {
+  --font-sans: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
+  --font-poppins: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) * 0.5);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.5);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
   }
-}
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  body {
+    @apply bg-background text-foreground;
+  }
 }
