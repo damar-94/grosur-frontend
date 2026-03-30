@@ -1,30 +1,56 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-type GeoLocation = { lat: number; lng: number } | null;
+interface LocationState {
+  coordinates: { lat: number; lng: number } | null;
+  error: string | null;
+  isLoading: boolean;
+}
 
 export const useGeolocation = () => {
-  const [location, setLocation] = useState<GeoLocation>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true); // Start true to prevent premature fetching
+  const [location, setLocation] = useState<LocationState>({
+    coordinates: null,
+    error: null,
+    isLoading: true,
+  });
 
-  const requestLocation = () => {
+  useEffect(() => {
+    // Check if the browser supports geolocation
     if (!navigator.geolocation) {
-      setError("Geolocation not supported.");
-      return setLoading(false);
+      setLocation({
+        coordinates: null,
+        error: "Browser Anda tidak mendukung fitur lokasi.",
+        isLoading: false,
+      });
+      return;
     }
 
+    // Request the location
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setLoading(false);
+      (position) => {
+        setLocation({
+          coordinates: {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          },
+          error: null,
+          isLoading: false,
+        });
       },
-      (err) => {
-        setError(err.message);
-        setLoading(false);
-      },
-      { timeout: 8000, maximumAge: 60000 }
-    );
-  };
+      (error) => {
+        // Handle different error codes (denied, unavailable, timeout)
+        let errorMessage = "Gagal mendapatkan lokasi.";
+        if (error.code === error.PERMISSION_DENIED) {
+          errorMessage = "Izin lokasi ditolak. Silakan izinkan akses lokasi di pengaturan browser Anda.";
+        }
 
-  return { location, error, loading, requestLocation };
+        setLocation({
+          coordinates: null,
+          error: errorMessage,
+          isLoading: false,
+        });
+      }
+    );
+  }, []);
+
+  return location;
 };
