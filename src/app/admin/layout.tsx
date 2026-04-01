@@ -4,11 +4,24 @@ import { BottomNav } from "@/components/admin/BottomNav";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
-export default function AdminLayout({
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Temporary Simple Protection
+  const cookieStore = await cookies();
+  const role = cookieStore.get("role")?.value;
+
+  // DIMATIKAN SEMENTARA UNTUK DEVELOPMENT:
+  // Jika cookie role bukan 'admin', tendang ke halaman utama
+  // if (role !== "admin") {
+  //   redirect("/");
+  // }
+
   return (
     <TooltipProvider delayDuration={0}>
       <SidebarProvider>
