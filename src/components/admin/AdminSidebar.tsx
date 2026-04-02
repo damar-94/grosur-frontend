@@ -47,7 +47,11 @@ export function AdminSidebar() {
             <SidebarMenu>
               {adminMenuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    tooltip={item.title}
+                    className="w-full rounded-none h-10"
+                  >
                     <Link href={item.url}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
