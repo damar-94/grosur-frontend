@@ -27,13 +27,13 @@ import { useAppStore } from "@/stores/useAppStore";
 
 const adminMenuItems = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard, roles: ["SUPER_ADMIN", "STORE_ADMIN"] },
-  { title: "Kelola Toko", url: "/admin/toko", icon: Store, roles: ["SUPER_ADMIN"] },
-  { title: "Kelola Admin", url: "/admin/manajemen-admin", icon: Users, roles: ["SUPER_ADMIN"] },
-  { title: "Kategori", url: "/admin/kategori", icon: Tags, roles: ["SUPER_ADMIN"] },
-  { title: "Produk", url: "/admin/produk", icon: Package, roles: ["SUPER_ADMIN"] },
-  { title: "Stok", url: "/admin/stok", icon: Box, roles: ["SUPER_ADMIN", "STORE_ADMIN"] },
-  { title: "Pesanan", url: "/admin/pesanan", icon: ShoppingCart, roles: ["SUPER_ADMIN", "STORE_ADMIN"] },
-  { title: "Laporan", url: "/admin/laporan", icon: FileText, roles: ["SUPER_ADMIN", "STORE_ADMIN"] },
+  { title: "Manage Stores", url: "/admin/stores", icon: Store, roles: ["SUPER_ADMIN"] },
+  { title: "Manage Admins", url: "/admin/manage-admins", icon: Users, roles: ["SUPER_ADMIN"] },
+  { title: "Categories", url: "/admin/categories", icon: Tags, roles: ["SUPER_ADMIN"] },
+  { title: "Products", url: "/admin/products", icon: Package, roles: ["SUPER_ADMIN"] },
+  { title: "Stocks", url: "/admin/stocks", icon: Box, roles: ["SUPER_ADMIN", "STORE_ADMIN"] },
+  { title: "Orders", url: "/admin/orders", icon: ShoppingCart, roles: ["SUPER_ADMIN", "STORE_ADMIN"] },
+  { title: "Reports", url: "/admin/reports", icon: FileText, roles: ["SUPER_ADMIN", "STORE_ADMIN"] },
 ];
 
 export function AdminSidebar() {
