@@ -1,5 +1,6 @@
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { ShoppingCart, Ban } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,40 +18,42 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
 
   return (
     <Card className="h-full flex flex-col overflow-hidden group hover:border-primary/50 transition-colors">
-      <CardHeader className="p-0 relative aspect-square overflow-hidden bg-muted">
-        {product.image ? (
-          <Image
-            src={product.image}
-            alt={product.name}
-            fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="object-cover transition-transform group-hover:scale-105"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-            No Image
+      <Link href={`/products/${product.slug}?storeId=${product.inventory.storeId}`} className="flex-1 flex flex-col">
+        <CardHeader className="p-0 relative aspect-square overflow-hidden bg-muted">
+          {product.image ? (
+            <Image
+              src={product.image}
+              alt={product.name}
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              className="object-cover transition-transform group-hover:scale-105"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+              No Image
+            </div>
+          )}
+          {isOutOfStock && (
+            <div className="absolute inset-0 bg-background/60 backdrop-blur-[2px] flex items-center justify-center">
+              <Badge variant="destructive" className="px-3 py-1 text-sm font-semibold uppercase tracking-wider">
+                Out of Stock
+              </Badge>
+            </div>
+          )}
+        </CardHeader>
+        
+        <CardContent className="p-4 flex-1 flex flex-col gap-1.5 border-t">
+          <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            {product.category}
           </div>
-        )}
-        {isOutOfStock && (
-          <div className="absolute inset-0 bg-background/60 backdrop-blur-[2px] flex items-center justify-center">
-            <Badge variant="destructive" className="px-3 py-1 text-sm font-semibold uppercase tracking-wider">
-              Out of Stock
-            </Badge>
-          </div>
-        )}
-      </CardHeader>
-      
-      <CardContent className="p-4 flex-1 flex flex-col gap-1.5">
-        <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-          {product.category}
-        </div>
-        <h3 className="font-semibold text-lg line-clamp-2 leading-tight min-h-10">
-          {product.name}
-        </h3>
-        <p className="text-sm text-muted-foreground line-clamp-2 mt-auto">
-          {product.description || "No description available"}
-        </p>
-      </CardContent>
+          <h3 className="font-semibold text-lg line-clamp-2 leading-tight min-h-10 group-hover:text-primary transition-colors">
+            {product.name}
+          </h3>
+          <p className="text-sm text-muted-foreground line-clamp-2 mt-auto">
+            {product.description || "No description available"}
+          </p>
+        </CardContent>
+      </Link>
 
       <CardFooter className="p-4 pt-0 flex flex-col gap-3">
         <div className="flex items-center justify-between w-full">
