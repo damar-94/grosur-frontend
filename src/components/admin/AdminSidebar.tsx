@@ -8,6 +8,9 @@ import {
   Box,
   ShoppingCart,
   FileText,
+  Store,
+  Users,
+  Tags,
 } from "lucide-react";
 
 import {
@@ -20,16 +23,26 @@ import {
   SidebarMenuButton,
   SidebarHeader,
 } from "@/components/ui/sidebar";
+import { useAuthStore } from "@/stores/authStore";
 
 const adminMenuItems = [
-  { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
-  { title: "Produk", url: "/admin/produk", icon: Package },
-  { title: "Stok", url: "/admin/stok", icon: Box },
-  { title: "Pesanan", url: "/admin/pesanan", icon: ShoppingCart },
-  { title: "Laporan", url: "/admin/laporan", icon: FileText },
+  { title: "Dashboard", url: "/admin", icon: LayoutDashboard, roles: ["SUPER_ADMIN", "STORE_ADMIN"] },
+  { title: "Kelola Toko", url: "/admin/toko", icon: Store, roles: ["SUPER_ADMIN"] },
+  { title: "Kelola Admin", url: "/admin/manajemen-admin", icon: Users, roles: ["SUPER_ADMIN"] },
+  { title: "Kategori", url: "/admin/kategori", icon: Tags, roles: ["SUPER_ADMIN"] },
+  { title: "Produk", url: "/admin/produk", icon: Package, roles: ["SUPER_ADMIN"] },
+  { title: "Stok", url: "/admin/stok", icon: Box, roles: ["SUPER_ADMIN", "STORE_ADMIN"] },
+  { title: "Pesanan", url: "/admin/pesanan", icon: ShoppingCart, roles: ["SUPER_ADMIN", "STORE_ADMIN"] },
+  { title: "Laporan", url: "/admin/laporan", icon: FileText, roles: ["SUPER_ADMIN", "STORE_ADMIN"] },
 ];
 
 export function AdminSidebar() {
+  const user = useAuthStore((state) => state.user);
+
+  const filteredMenuItems = adminMenuItems.filter(
+    (item) => !item.roles || (user?.role && item.roles.includes(user.role))
+  );
+
   return (
     <Sidebar collapsible="icon" className="border-r">
       <SidebarHeader className="h-16 flex justify-center px-4 border-b">
@@ -45,7 +58,7 @@ export function AdminSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {adminMenuItems.map((item) => (
+              {filteredMenuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
