@@ -16,8 +16,23 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { useAppStore } from "@/stores/useAppStore";
+import { api } from "@/lib/axiosInstance";
+import { useRouter } from "next/navigation";
 
 export function AdminHeader() {
+  const { user, logout } = useAppStore();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      await api.post("/auth/logout");
+      logout();
+      router.push("/login");
+    } catch (error) {
+      console.error("Logout failed", error);
+    }
+  };
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 border-b-2 border-gray-300 shadow-md backdrop-blur supports-backdrop-filter:bg-background/60">
       <div className="flex h-16 items-center px-4 md:px-6 gap-4">
@@ -81,9 +96,9 @@ export function AdminHeader() {
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <DropdownMenuLabel className="font-normal border-b pb-2 mb-1">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">Admin User</p>
+                  <p className="text-sm font-medium leading-none">{user?.name || "Admin User"}</p>
                   <p className="text-xs text-muted-foreground">
-                    admin@grosur.com
+                    {user?.email || "admin@grosur.com"}
                   </p>
                 </div>
               </DropdownMenuLabel>
@@ -92,7 +107,10 @@ export function AdminHeader() {
                 <span>Profile Settings</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive">
+              <DropdownMenuItem 
+                onClick={handleLogout}
+                className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive"
+              >
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Logout</span>
               </DropdownMenuItem>

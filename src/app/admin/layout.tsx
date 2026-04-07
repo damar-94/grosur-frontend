@@ -12,15 +12,13 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Temporary Simple Protection
   const cookieStore = await cookies();
   const role = cookieStore.get("role")?.value;
 
-  // DIMATIKAN SEMENTARA UNTUK DEVELOPMENT:
-  // Jika cookie role bukan 'admin', tendang ke halaman utama
-  // if (role !== "admin") {
-  //   redirect("/");
-  // }
+  // Proteksi akses: hanya SUPER_ADMIN dan STORE_ADMIN yang bisa masuk
+  if (role !== "SUPER_ADMIN" && role !== "STORE_ADMIN") {
+    redirect("/");
+  }
 
   return (
     <TooltipProvider delayDuration={0}>

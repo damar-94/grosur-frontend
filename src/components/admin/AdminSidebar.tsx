@@ -23,7 +23,7 @@ import {
   SidebarMenuButton,
   SidebarHeader,
 } from "@/components/ui/sidebar";
-import { useAuthStore } from "@/stores/authStore";
+import { useAppStore } from "@/stores/useAppStore";
 
 const adminMenuItems = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard, roles: ["SUPER_ADMIN", "STORE_ADMIN"] },
@@ -37,7 +37,7 @@ const adminMenuItems = [
 ];
 
 export function AdminSidebar() {
-  const user = useAuthStore((state) => state.user);
+  const { user } = useAppStore();
 
   const filteredMenuItems = adminMenuItems.filter(
     (item) => !item.roles || (user?.role && item.roles.includes(user.role))
