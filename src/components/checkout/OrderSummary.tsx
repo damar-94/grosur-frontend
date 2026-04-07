@@ -1,7 +1,7 @@
 "use client";
 
 import { api } from "@/lib/axiosInstance";
-import { useAppStore } from "@/store/useAppStore";
+import { useAppStore } from "@/stores/useAppStore";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 

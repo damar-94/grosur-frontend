@@ -3,15 +3,20 @@
 import HeroBanner from "@/components/HeroBanner";
 import ProductGridPlaceholder from "@/components/product/ProductGridPlaceholder";
 import { useGeolocation } from "@/hooks/useGeolocation";
+import { useLocationStore } from "@/stores/useLocationStore"; // IMPORT ZUSTAND
 import { FiMapPin, FiAlertCircle, FiLoader } from "react-icons/fi";
 
 export default function HomePage() {
-  // Trigger the location prompt as soon as the page loads
-  const { coordinates, error, isLoading } = useGeolocation();
+  // 1. Trigger the hook to request permission
+  const { error, isLoading } = useGeolocation();
+  
+  // 2. Read the result from Zustand Global State
+  const latitude = useLocationStore((state) => state.latitude);
+  const isLocationDenied = useLocationStore((state) => state.isLocationDenied);
 
   return (
     <div className="mx-auto max-w-[1200px] space-y-4 pb-20 pt-0 md:space-y-6 md:px-6 md:pt-6">
-
+      
       {/* Geolocation Status Banner */}
       <div className="px-4 pt-4 md:px-0 md:pt-0">
         {isLoading && (
@@ -19,16 +24,16 @@ export default function HomePage() {
             <FiLoader className="animate-spin" /> Sedang mencari lokasi Anda...
           </div>
         )}
-
-        {error && (
-          <div className="flex items-center gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-700 border border-red-100">
+        
+        {isLocationDenied && (
+          <div className="flex items-center gap-2 rounded-lg bg-orange-50 p-3 text-sm text-orange-700 border border-orange-100">
             <FiAlertCircle className="shrink-0" /> {error}
           </div>
         )}
 
-        {coordinates && (
+        {latitude && !isLoading && (
           <div className="flex items-center gap-2 rounded-lg bg-[#59cfb7]/20 p-3 text-sm text-[#00997a] border border-[#59cfb7]/30">
-            <FiMapPin className="shrink-0" /> Lokasi ditemukan! Menyiapkan produk dari toko terdekat...
+            <FiMapPin className="shrink-0" /> Lokasi ditemukan! Menyiapkan toko terdekat...
           </div>
         )}
       </div>
