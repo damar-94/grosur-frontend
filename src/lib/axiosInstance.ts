@@ -20,11 +20,12 @@ api.interceptors.response.use(
       useAppStore.getState().logout();
 
       if (typeof window !== "undefined") {
-        // Redir to login if unauthorized, or home if forbidden
-        if (status === 401) {
+        const isLoginPage = window.location.pathname === "/login";
+        const isHomePage = window.location.pathname === "/";
+
+        if (status === 401 && !isLoginPage) {
           window.location.href = "/login";
-        } else {
-          // You could show a toast here before redirecting
+        } else if (status === 403 && data?.code === "FORBIDDEN" && !isHomePage) {
           window.location.href = "/";
         }
       }
