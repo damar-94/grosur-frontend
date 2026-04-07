@@ -28,6 +28,7 @@ import { useAppStore } from "@/stores/useAppStore";
 const adminMenuItems = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard, roles: ["SUPER_ADMIN", "STORE_ADMIN"] },
   { title: "Manage Stores", url: "/admin/stores", icon: Store, roles: ["SUPER_ADMIN"] },
+  { title: "Manage Users", url: "/admin/users", icon: Users, roles: ["SUPER_ADMIN"] },
   { title: "Manage Admins", url: "/admin/manage-admins", icon: Users, roles: ["SUPER_ADMIN"] },
   { title: "Categories", url: "/admin/categories", icon: Tags, roles: ["SUPER_ADMIN"] },
   { title: "Products", url: "/admin/products", icon: Package, roles: ["SUPER_ADMIN"] },

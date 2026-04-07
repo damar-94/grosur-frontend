@@ -115,7 +115,11 @@ export function StoreAdminModal({
     try {
       if (isEdit && admin) {
         // Update
-        const { password: _unused, ...updateData } = values;
+        const updateData = {
+          name: values.name,
+          email: values.email,
+          managedStoreId: values.managedStoreId,
+        };
         await adminService.updateStoreAdmin(admin.id, updateData);
         toast.success("Admin updated successfully");
       } else {
@@ -130,8 +134,13 @@ export function StoreAdminModal({
       }
       onSuccess();
       onClose();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || "Something went wrong");
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        const axiosError = error as any;
+        toast.error(axiosError.response?.data?.message || "Something went wrong");
+      } else {
+        toast.error("An unknown error occurred");
+      }
     } finally {
       setLoading(false);
     }
@@ -153,7 +162,7 @@ export function StoreAdminModal({
             <FormField
               control={form.control}
               name="name"
-              render={({ field }: { field: any }) => (
+              render={({ field }) => (
                 <FormItem>
                   <FormLabel>Full Name</FormLabel>
                   <FormControl>
@@ -166,7 +175,7 @@ export function StoreAdminModal({
             <FormField
               control={form.control}
               name="email"
-              render={({ field }: { field: any }) => (
+              render={({ field }) => (
                 <FormItem>
                   <FormLabel>Email Address</FormLabel>
                   <FormControl>
@@ -180,7 +189,7 @@ export function StoreAdminModal({
               <FormField
                 control={form.control}
                 name="password"
-                render={({ field }: { field: any }) => (
+                render={({ field }) => (
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
@@ -195,7 +204,7 @@ export function StoreAdminModal({
             <FormField
               control={form.control}
               name="managedStoreId"
-              render={({ field }: { field: any }) => (
+              render={({ field }) => (
                 <FormItem>
                   <FormLabel>Assign to Store</FormLabel>
                   <Select 
