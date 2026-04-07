@@ -9,6 +9,7 @@ export interface Product {
     category: string;
     categoryId: string;
     image: string | null;
+    images?: { id: string; url: string }[];
     inventory: {
         quantity: number;
         storeId: string;
@@ -65,6 +66,11 @@ export const productService = {
 
     getStores: async (): Promise<{ success: boolean; data: { id: string; name: string; city: string; district: string }[] }> => {
         const response = await api.get("/stores");
+        return response.data;
+    },
+
+    getProductDetail: async (slug: string, storeId: string): Promise<{ success: boolean; data: Product }> => {
+        const response = await api.get(`/products/${slug}?storeId=${storeId}`);
         return response.data;
     },
 };
