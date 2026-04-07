@@ -33,17 +33,29 @@ import {
 } from "@/components/ui/select";
 import { adminService } from "@/services/adminService";
 
+interface Store {
+  id: string;
+  name: string;
+}
+
+interface StoreAdmin {
+  id: string;
+  name: string;
+  email: string;
+  managedStoreId: string;
+}
+
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters").optional().or(z.literal("")),
-  managedStoreId: z.string().min(1, "Please select a store"),
+  managedStoreId: z.string().uuid("Please select a valid store"),
 });
 
 interface StoreAdminModalProps {
   isOpen: boolean;
   onClose: () => void;
-  admin?: any; // If present, we are in Edit mode
+  admin?: StoreAdmin | null; // If present, we are in Edit mode
   onSuccess: () => void;
 }
 
@@ -53,7 +65,7 @@ export function StoreAdminModal({
   admin,
   onSuccess,
 }: StoreAdminModalProps) {
-  const [stores, setStores] = useState<any[]>([]);
+  const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState(false);
 
   const isEdit = !!admin;
@@ -101,9 +113,9 @@ export function StoreAdminModal({
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setLoading(true);
     try {
-      if (isEdit) {
+      if (isEdit && admin) {
         // Update
-        const { password, ...updateData } = values;
+        const { password: _unused, ...updateData } = values;
         await adminService.updateStoreAdmin(admin.id, updateData);
         toast.success("Admin updated successfully");
       } else {
@@ -141,7 +153,7 @@ export function StoreAdminModal({
             <FormField
               control={form.control}
               name="name"
-              render={({ field }) => (
+              render={({ field }: { field: any }) => (
                 <FormItem>
                   <FormLabel>Full Name</FormLabel>
                   <FormControl>
@@ -154,7 +166,7 @@ export function StoreAdminModal({
             <FormField
               control={form.control}
               name="email"
-              render={({ field }) => (
+              render={({ field }: { field: any }) => (
                 <FormItem>
                   <FormLabel>Email Address</FormLabel>
                   <FormControl>
@@ -168,7 +180,7 @@ export function StoreAdminModal({
               <FormField
                 control={form.control}
                 name="password"
-                render={({ field }) => (
+                render={({ field }: { field: any }) => (
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
@@ -183,7 +195,7 @@ export function StoreAdminModal({
             <FormField
               control={form.control}
               name="managedStoreId"
-              render={({ field }) => (
+              render={({ field }: { field: any }) => (
                 <FormItem>
                   <FormLabel>Assign to Store</FormLabel>
                   <Select 
