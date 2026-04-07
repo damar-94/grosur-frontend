@@ -1,5 +1,6 @@
 import { FiPlus } from "react-icons/fi";
 
+
 // Added real image URLs for a polished UI
 const DUMMY_PRODUCTS = [
     {
@@ -52,7 +53,11 @@ const DUMMY_PRODUCTS = [
     },
 ];
 
-export default function ProductGridPlaceholder() {
+interface ProductGridPlaceholderProps {
+    storeId?: string | null;
+}
+
+export default function ProductGridPlaceholder({ storeId }: ProductGridPlaceholderProps) {
     return (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 md:gap-4">
             {DUMMY_PRODUCTS.map((product) => (
