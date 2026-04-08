@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { api } from "@/lib/axiosInstance";
 
 export default function Header() {
-  const { user, logout } = useAppStore();
+  const { user, logout, cartCount } = useAppStore();
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -23,7 +23,7 @@ export default function Header() {
   };
 
   return (
-    <header className="flex items-center justify-between p-4 bg-white shadow-sm border-b">
+    <header className="flex items-center justify-between p-4 bg-white shadow-sm border-b sticky top-0 z-50">
       <Link href="/" className="text-xl font-bold text-[#00997a]">
         Grosur
       </Link>
@@ -38,7 +38,16 @@ export default function Header() {
               </Link>
             )}
 
-            <Link href="/profile" className="text-sm font-medium">
+            <Link href="/cart" className="relative text-sm font-medium hover:text-[#00997a] flex items-center gap-1">
+              Keranjang
+              {cartCount > 0 && (
+                <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
+
+            <Link href="/profile" className="text-sm font-medium hover:text-[#00997a]">
               {user.email}
             </Link>
 
@@ -56,7 +65,7 @@ export default function Header() {
             </Link>
             <Link
               href="/register"
-              className="px-4 py-2 text-sm font-bold text-white bg-[#00997a] rounded-md"
+              className="px-4 py-2 text-sm font-bold text-white bg-[#00997a] rounded-md hover:bg-[#008066]"
             >
               Daftar
             </Link>

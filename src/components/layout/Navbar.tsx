@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import {
   FiSearch,
@@ -6,8 +8,11 @@ import {
   FiHome,
   FiGrid,
 } from "react-icons/fi";
+import { useAppStore } from "@/stores/useAppStore";
 
 export default function Navbar() {
+  const { cartCount } = useAppStore();
+
   return (
     <>
       {/* 1. TOP HEADER (Sticky Search & Desktop Nav) */}
@@ -53,9 +58,11 @@ export default function Navbar() {
               className="relative text-foreground hover:text-primary transition-colors"
             >
               <FiShoppingCart size={22} />
-              <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-accent-foreground shadow-sm">
-                0
-              </span>
+              {cartCount > 0 && (
+                <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm">
+                  {cartCount > 99 ? "99+" : cartCount}
+                </span>
+              )}
             </Link>
             <Link
               href="/profile"
@@ -92,9 +99,11 @@ export default function Navbar() {
           >
             <div className="relative">
               <FiShoppingCart size={20} />
-              <span className="absolute -right-2 -top-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-accent text-[8px] font-bold text-accent-foreground shadow-sm">
-                0
-              </span>
+              {cartCount > 0 && (
+                <span className="absolute -right-2 -top-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold text-white shadow-sm">
+                  {cartCount > 9 ? "9+" : cartCount}
+                </span>
+              )}
             </div>
             <span className="text-[10px] font-medium">Keranjang</span>
           </Link>
@@ -111,3 +120,4 @@ export default function Navbar() {
     </>
   );
 }
+

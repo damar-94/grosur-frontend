@@ -3,6 +3,7 @@ import { Montserrat, Poppins, Geist } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import AuthProvider from "@/components/providers/AuthProvider";
+import { Toaster } from "sonner";
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -35,6 +36,7 @@ export default function RootLayout({
         <AuthProvider>
           {children}
         </AuthProvider>
+        <Toaster position="top-center" richColors closeButton />
       </body>
     </html>
   );
