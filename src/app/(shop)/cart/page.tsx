@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { api } from "@/lib/axiosInstance";
 import { useAppStore } from "@/stores/useAppStore";
 import { useRouter } from "next/navigation";
-import { FiMinus, FiPlus, FiTrash2, FiShoppingCart, FiArrowLeft } from "react-icons/fi";
+import { FiMinus, FiPlus, FiTrash2, FiShoppingCart, FiArrowLeft, FiLoader, FiAlertCircle } from "react-icons/fi";
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -27,6 +27,8 @@ export default function CartPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [stockError, setStockError] = useState<string | null>(null);
 
   const fetchCart = useCallback(async () => {
     try {
@@ -81,6 +83,44 @@ export default function CartPage() {
       toast.error("Gagal menghapus produk");
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  // Pre-validate stock before going to checkout
+  const handleCheckout = async () => {
+    if (cartItems.length === 0) return;
+    setIsCheckingOut(true);
+    setStockError(null);
+    try {
+      // Check stock availability for all items
+      const res = await api.post("/cart/validate-stock", {
+        items: cartItems.map((item) => ({
+          cartItemId: item.id,
+          productId: item.product.id,
+          quantity: item.quantity,
+        })),
+      });
+
+      if (res.data.success) {
+        router.push("/checkout");
+      } else {
+        // Some items have insufficient stock
+        const outOfStock: string[] = res.data.data?.outOfStock || [];
+        if (outOfStock.length > 0) {
+          setStockError(
+            `Stok tidak mencukupi untuk: ${outOfStock.join(", ")}. Silakan kurangi jumlah atau hapus item tersebut.`
+          );
+        } else {
+          router.push("/checkout"); // Proceed if error message is ambiguous
+        }
+      }
+    } catch (err: any) {
+      // If the endpoint doesn't exist (404), or we get another error
+      // we proceed to checkout as a fallback based on requirements
+      console.warn("Stock validation unavailable or failed, proceeding to checkout.");
+      router.push("/checkout");
+    } finally {
+      setIsCheckingOut(false);
     }
   };
 
@@ -244,8 +284,27 @@ export default function CartPage() {
                 <span className="text-[#00997a]">Rp {subtotal.toLocaleString("id-ID")}</span>
               </div>
 
-              <button className="w-full py-3 bg-[#00997a] hover:bg-[#007a61] active:scale-95 text-white font-bold rounded-xl transition-all duration-150 shadow-sm">
-                Lanjut ke Checkout
+              {/* Stock Error Alert */}
+              {stockError && (
+                <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-xl flex gap-2">
+                  <FiAlertCircle size={14} className="text-red-500 shrink-0 mt-0.5" />
+                  <p className="text-xs text-red-600 leading-relaxed">{stockError}</p>
+                </div>
+              )}
+
+              <button
+                onClick={handleCheckout}
+                disabled={isCheckingOut || cartItems.length === 0}
+                className="w-full py-3 bg-[#00997a] hover:bg-[#007a61] active:scale-95 text-white font-bold rounded-xl transition-all duration-150 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100 flex items-center justify-center gap-2"
+              >
+                {isCheckingOut ? (
+                  <>
+                    <FiLoader size={16} className="animate-spin" />
+                    Memeriksa Stok...
+                  </>
+                ) : (
+                  "Lanjut ke Checkout"
+                )}
               </button>
 
               <Link

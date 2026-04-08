@@ -1,0 +1,257 @@
+"use client";
+
+import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { toast } from "sonner";
+import {
+  FiPackage,
+  FiClock,
+  FiMapPin,
+  FiChevronRight,
+  FiFilter,
+  FiSearch,
+  FiAlertCircle,
+  FiLoader,
+  FiArrowLeft,
+} from "react-icons/fi";
+import { fetchOrders, type Order } from "@/services/checkoutService";
+import { useAppStore } from "@/stores/useAppStore";
+
+type OrderStatus = "ALL" | "PENDING" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED";
+
+export default function OrdersPage() {
+  const { user } = useAppStore();
+  const router = useRouter();
+
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState<OrderStatus>("ALL");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  const loadOrders = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const filter = statusFilter === "ALL" ? undefined : statusFilter;
+      const data = await fetchOrders({ page, status: filter });
+      setOrders(data.orders);
+      setTotalPages(data.totalPages);
+    } catch (err) {
+      toast.error("Gagal memuat daftar pesanan");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [page, statusFilter]);
+
+  useEffect(() => {
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+    loadOrders();
+  }, [user, router, loadOrders]);
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "PENDING":
+        return "bg-amber-100 text-amber-700 border-amber-200";
+      case "PROCESSING":
+        return "bg-blue-100 text-blue-700 border-blue-200";
+      case "SHIPPED":
+        return "bg-indigo-100 text-indigo-700 border-indigo-200";
+      case "DELIVERED":
+        return "bg-emerald-100 text-emerald-700 border-emerald-200";
+      case "CANCELLED":
+        return "bg-rose-100 text-rose-700 border-rose-200";
+      default:
+        return "bg-gray-100 text-gray-700 border-gray-200";
+    }
+  };
+
+  const statusOptions: { label: string; value: OrderStatus }[] = [
+    { label: "Semua", value: "ALL" },
+    { label: "Menunggu", value: "PENDING" },
+    { label: "Diproses", value: "PROCESSING" },
+    { label: "Dikirim", value: "SHIPPED" },
+    { label: "Selesai", value: "DELIVERED" },
+    { label: "Dibatalkan", value: "CANCELLED" },
+  ];
+
+  if (!user && !isLoading) return null;
+
+  return (
+    <div className="max-w-[1000px] mx-auto px-4 py-8">
+      {/* ── Header ── */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div className="flex items-center gap-3">
+          <Link href="/" className="text-gray-400 hover:text-[#00997a] transition-colors">
+            <FiArrowLeft size={20} />
+          </Link>
+          <div>
+            <h1 className="text-2xl font-extrabold text-[#1a1a1a]">Pesanan Saya</h1>
+            <p className="text-sm text-gray-500 mt-0.5">Pantau status belanjaanmu di sini</p>
+          </div>
+        </div>
+
+        {/* Filter Tabs (Mobile Scrollable) */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 no-scrollbar">
+          {statusOptions.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => {
+                setStatusFilter(opt.value);
+                setPage(1);
+              }}
+              className={`px-4 py-2 rounded-full text-xs font-bold border transition-all whitespace-nowrap ${
+                statusFilter === opt.value
+                  ? "bg-[#00997a] text-white border-[#00997a] shadow-sm shadow-[#00997a]/20"
+                  : "bg-white text-gray-500 border-gray-100 hover:border-gray-300"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {isLoading ? (
+        /* Loading State */
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-white rounded-2xl border border-gray-100 p-6 animate-pulse">
+              <div className="flex justify-between mb-4">
+                <div className="h-4 bg-gray-100 rounded w-1/4" />
+                <div className="h-6 bg-gray-100 rounded-full w-20" />
+              </div>
+              <div className="space-y-2">
+                <div className="h-3 bg-gray-100 rounded w-3/4" />
+                <div className="h-3 bg-gray-100 rounded w-1/2" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : orders.length === 0 ? (
+        /* Empty State */
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm py-20 px-6 flex flex-col items-center text-center">
+          <div className="w-20 h-20 rounded-full bg-gray-50 flex items-center justify-center mb-6">
+            <FiPackage size={40} className="text-gray-200" />
+          </div>
+          <h2 className="text-xl font-bold text-[#1a1a1a] mb-2">Belum ada pesanan</h2>
+          <p className="text-gray-400 text-sm max-w-xs leading-relaxed mb-8">
+            Kamu belum memiliki riwayat pesanan {statusFilter !== "ALL" ? `dengan status ${statusFilter.toLowerCase()}` : ""}.
+          </p>
+          <Link
+            href="/"
+            className="px-8 py-3 bg-[#00997a] text-white font-bold rounded-xl hover:bg-[#007a61] transition-all shadow-sm"
+          >
+            Mulai Belanja Sekarang
+          </Link>
+        </div>
+      ) : (
+        /* Order List */
+        <div className="space-y-4">
+          {orders.map((order) => {
+            const orderNumber = order.orderNumber || order.id.slice(0, 8).toUpperCase();
+            const date = new Date(order.createdAt).toLocaleDateString("id-ID", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            });
+
+            return (
+              <div
+                key={order.id}
+                className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-[#00997a]/30 transition-all overflow-hidden group"
+              >
+                <Link href={order.status === "PENDING" && order.paymentStatus === "PENDING" ? `/checkout/${order.id}/payment` : `/checkout/${order.id}/success`}>
+                  <div className="p-5 md:p-6">
+                    <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-[#00997a]">
+                          <FiPackage size={20} />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-[#1a1a1a]">#{orderNumber}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <FiClock size={12} className="text-gray-400" />
+                            <p className="text-[11px] text-gray-400">{date}</p>
+                          </div>
+                        </div>
+                      </div>
+                      <span className={`text-[10px] font-extrabold uppercase tracking-wider px-3 py-1.5 rounded-full border ${getStatusColor(order.status)}`}>
+                        {order.status}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {/* Products Summary */}
+                      <div className="md:col-span-2 flex items-center gap-4">
+                         <div className="flex-1">
+                            <p className="text-sm text-gray-600 line-clamp-1">
+                              Pembayaran via <span className="font-semibold">{order.paymentMethod.replace("_", " ")}</span>
+                            </p>
+                            <p className="text-xs text-gray-400 mt-1">
+                               Dikirim ke <span className="text-gray-600">{order.address?.city}</span>
+                            </p>
+                         </div>
+                      </div>
+
+                      {/* Price & Action */}
+                      <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center border-t md:border-t-0 md:border-l border-gray-50 pt-4 md:pt-0 md:pl-6">
+                        <div className="text-left md:text-right">
+                          <p className="text-[10px] text-gray-400 font-medium uppercase tracking-tight">Total Belanja</p>
+                          <p className="text-base font-extrabold text-[#00997a]">
+                            Rp {Number(order.totalAmount).toLocaleString("id-ID")}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1 text-[#00997a] font-bold text-xs mt-1 group-hover:translate-x-1 transition-transform">
+                          Detail <FiChevronRight />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+
+                {/* Footer Action for Pending manual payments */}
+                {order.status === "PENDING" && order.paymentStatus === "PENDING" && order.paymentMethod === "MANUAL_TRANSFER" && (
+                  <div className="bg-amber-50 px-6 py-3 flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-amber-700">
+                      <FiAlertCircle size={14} />
+                      <span className="text-xs font-medium">Selesaikan pembayaran & upload bukti transfer</span>
+                    </div>
+                    <Link
+                      href={`/checkout/${order.id}/payment`}
+                      className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-bold rounded-lg transition-colors"
+                    >
+                      Bayar Sekarang
+                    </Link>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── Pagination ── */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-2 mt-12">
+           {Array.from({ length: totalPages }).map((_, i) => (
+             <button
+               key={i}
+               onClick={() => setPage(i + 1)}
+               className={`w-10 h-10 rounded-xl font-bold text-sm transition-all ${
+                 page === i + 1
+                   ? "bg-[#00997a] text-white shadow-lg shadow-[#00997a]/20"
+                   : "bg-white text-gray-400 border border-gray-100 hover:border-gray-200"
+               }`}
+             >
+               {i + 1}
+             </button>
+           ))}
+        </div>
+      )}
+    </div>
+  );
+}

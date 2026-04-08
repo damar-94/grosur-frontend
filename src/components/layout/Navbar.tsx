@@ -7,6 +7,7 @@ import {
   FiUser,
   FiHome,
   FiGrid,
+  FiPackage,
 } from "react-icons/fi";
 import { useAppStore } from "@/stores/useAppStore";
 
@@ -63,6 +64,13 @@ export default function Navbar() {
                   {cartCount > 99 ? "99+" : cartCount}
                 </span>
               )}
+            </Link>
+            <Link
+              href="/orders"
+              className="text-foreground hover:text-primary transition-colors"
+              title="Pesanan Saya"
+            >
+              <FiPackage size={22} />
             </Link>
             <Link
               href="/profile"
