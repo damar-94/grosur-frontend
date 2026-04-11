@@ -6,6 +6,10 @@ interface User {
   email: string;
   role: string;
   name?: string;
+  managedStore?: {
+    id: string;
+    name: string;
+  };
 }
 
 interface Store {

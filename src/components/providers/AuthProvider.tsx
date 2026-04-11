@@ -13,7 +13,13 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         setLoading(true);
         const { data } = await api.get("/auth/me");
         if (data.success && data.data.user) {
-          setUser(data.data.user);
+          const user = data.data.user;
+          setUser(user);
+          
+          // For STORE_ADMIN, automatically set their managed store as the active store
+          if (user.role === "STORE_ADMIN" && user.managedStore) {
+            useAppStore.getState().setNearestStore(user.managedStore);
+          }
         } else {
           setUser(null);
         }
