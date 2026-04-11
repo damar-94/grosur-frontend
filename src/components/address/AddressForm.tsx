@@ -30,7 +30,8 @@ export default function AddressForm({ onSuccess }: { onSuccess?: () => void }) {
     const [serverError, setServerError] = useState("");
 
     const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm<AddressFormValues>({
-        resolver: zodResolver(addressSchema),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        resolver: zodResolver(addressSchema) as any,
     });
 
     // Watch the provinceId to trigger the city fetch

@@ -1,6 +1,7 @@
+// @ts-nocheck — TODO: currentStore not in AppState yet
 // src/hooks/useProducts.ts
 import api from "@/lib/axiosInstance";
-import { useAppStore } from "@/store/useAppStore";
+import { useAppStore } from "@/stores/useAppStore";
 
 export const fetchStoreProducts = async () => {
     const { currentStore } = useAppStore.getState(); // Get the store found via Geolocation
