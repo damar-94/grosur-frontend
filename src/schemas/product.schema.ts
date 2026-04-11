@@ -7,9 +7,9 @@ export const IMAGE_CONSTRAINTS = {
   /** Max total images (existing + new) */
   MAX_IMAGES: 5,
   /** Allowed MIME types — must match backend fileFilter */
-  ALLOWED_TYPES: ["image/jpeg", "image/jpg", "image/png"] as const,
+  ALLOWED_TYPES: ["image/jpeg", "image/jpg", "image/png", "image/gif"] as const,
   /** Human-readable label for error messages */
-  ALLOWED_EXTENSIONS: ".jpg, .jpeg, .png",
+  ALLOWED_EXTENSIONS: ".jpg, .jpeg, .png, .gif",
 } as const;
 
 // ─── Product form schema (used by Create & Edit pages) ───────────────────────
