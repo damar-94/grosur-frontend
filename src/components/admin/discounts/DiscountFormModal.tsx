@@ -73,12 +73,8 @@ const discountSchema = z.object({
   freeQty: z.coerce.number().min(1).optional(),
   // Date Range
   dateRange: z.object({
-    from: z.date({
-      required_error: "Tanggal mulai dibutuhkan.",
-    }),
-    to: z.date({
-      required_error: "Tanggal berakhir dibutuhkan.",
-    }),
+    from: z.date(),
+    to: z.date(),
   }).refine((data) => data.to > data.from, {
     message: "Periode promo harus valid (Selisih minimal 1 hari).",
     path: ["to"],
