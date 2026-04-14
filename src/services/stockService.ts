@@ -13,9 +13,50 @@ export interface StockUpdateResponse {
   data: unknown;
 }
 
+export interface StockJournal {
+  id: string;
+  stockId: string;
+  type: "IN" | "OUT";
+  quantity: number;
+  oldQuantity: number;
+  newQuantity: number;
+  reason: string;
+  createdAt: string;
+  user?: {
+    id: string;
+    name: string;
+  };
+}
+
+export interface StockJournalResponse {
+  success: boolean;
+  data: StockJournal[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPage: number;
+    hasMore: boolean;
+  };
+}
+
 export const stockService = {
   updateStock: async (payload: StockUpdateRequest): Promise<StockUpdateResponse> => {
     const response = await api.patch("/stocks/update", payload);
+    return response.data;
+  },
+
+  getStockJournals: async (params: {
+    productId?: string;
+    storeId?: string;
+    limit?: number;
+    page?: number;
+  }): Promise<StockJournalResponse> => {
+    const query = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined) query.append(key, String(value));
+    });
+    const response = await api.get(`/stocks/journals?${query.toString()}`);
     return response.data;
   },
 };

@@ -8,6 +8,7 @@ import { useAppStore } from "@/stores/useAppStore";
 import { Product, productService } from "@/services/productService";
 import { StockTable } from "@/components/admin/stocks/StockTable";
 import { StockAdjustmentModal } from "@/components/admin/stocks/StockAdjustmentModal";
+import { StockHistoryModal } from "@/components/admin/stocks/StockHistoryModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
@@ -31,6 +32,7 @@ export default function StockManagementPage() {
   const [isLoading, setIsLoading] = React.useState(true);
 
   const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = React.useState(false);
   const [selectedProduct, setSelectedProduct] = React.useState<Product | null>(null);
 
   // 1. Fetch Master Stores (Only relevant for SUPER_ADMIN)
@@ -79,6 +81,11 @@ export default function StockManagementPage() {
   const handleAdjustClick = (product: Product) => {
     setSelectedProduct(product);
     setIsModalOpen(true);
+  };
+
+  const handleHistoryClick = (product: Product) => {
+    setSelectedProduct(product);
+    setIsHistoryModalOpen(true);
   };
 
   return (
@@ -134,6 +141,7 @@ export default function StockManagementPage() {
             isLoading={isLoading}
             storeSelected={!!selectedStoreId}
             onAdjustStock={handleAdjustClick}
+            onViewHistory={handleHistoryClick}
           />
         )}
       </div>
@@ -144,6 +152,13 @@ export default function StockManagementPage() {
         product={selectedProduct}
         storeId={selectedStoreId || ""}
         onSuccess={fetchInventory}
+      />
+
+      <StockHistoryModal
+        isOpen={isHistoryModalOpen}
+        onOpenChange={setIsHistoryModalOpen}
+        product={selectedProduct}
+        storeId={selectedStoreId || ""}
       />
     </div>
   );

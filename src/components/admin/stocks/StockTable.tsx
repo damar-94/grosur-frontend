@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Image from "next/image";
-import { Edit3 } from "lucide-react";
+import { Edit3, History } from "lucide-react";
 import { Product } from "@/services/productService";
 import {
   Table,
@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 interface StockTableProps {
   products: Product[];
   onAdjustStock: (product: Product) => void;
+  onViewHistory: (product: Product) => void;
   isLoading: boolean;
   storeSelected: boolean;
 }
@@ -25,6 +26,7 @@ interface StockTableProps {
 export function StockTable({
   products,
   onAdjustStock,
+  onViewHistory,
   isLoading,
   storeSelected,
 }: StockTableProps) {
@@ -122,13 +124,22 @@ export function StockTable({
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => onAdjustStock(product)}
-                  >
-                    <Edit3 className="mr-2 h-3.5 w-3.5" /> Sesuaikan
-                  </Button>
+                  <div className="flex items-center justify-end gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onAdjustStock(product)}
+                    >
+                      <Edit3 className="mr-2 h-3.5 w-3.5" /> Sesuaikan
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => onViewHistory(product)}
+                    >
+                      <History className="mr-2 h-3.5 w-3.5" /> Riwayat
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             );
