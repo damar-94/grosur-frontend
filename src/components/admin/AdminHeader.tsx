@@ -23,6 +23,11 @@ import { useRouter } from "next/navigation";
 export function AdminHeader() {
   const { user, logout } = useAppStore();
   const router = useRouter();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -79,43 +84,47 @@ export function AdminHeader() {
             <span className="sr-only">Notifications</span>
           </Button>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="relative h-9 w-9 rounded-full ml-1"
-              >
-                <Avatar className="h-9 w-9 border border-border">
-                  <AvatarImage src="/placeholder-avatar.png" alt="@admin" />
-                  <AvatarFallback className="bg-primary/10 text-primary">
-                    AD
-                  </AvatarFallback>
-                </Avatar>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
-              <DropdownMenuLabel className="font-normal border-b pb-2 mb-1">
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{user?.name || "Admin User"}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {user?.email || "admin@grosur.com"}
-                  </p>
-                </div>
-              </DropdownMenuLabel>
-              <DropdownMenuItem className="cursor-pointer">
-                <User className="mr-2 h-4 w-4" />
-                <span>Profile Settings</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                onClick={handleLogout}
-                className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive"
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Logout</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {mounted ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="relative h-9 w-9 rounded-full ml-1"
+                >
+                  <Avatar className="h-9 w-9 border border-border">
+                    <AvatarImage src="/placeholder-avatar.png" alt="@admin" />
+                    <AvatarFallback className="bg-primary/10 text-primary">
+                      {user ? user.name?.charAt(0).toUpperCase() : "AD"}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal border-b pb-2 mb-1">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{user?.name || "Admin User"}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {user?.email || "admin@grosur.com"}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuItem className="cursor-pointer">
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Profile Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={handleLogout}
+                  className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Logout</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <div className="h-9 w-9 rounded-full bg-muted animate-pulse ml-1" />
+          )}
         </div>
       </div>
     </header>

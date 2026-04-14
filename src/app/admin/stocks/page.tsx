@@ -46,7 +46,7 @@ export default function StockManagementPage() {
           }
         }
       }).catch(() => {
-        toast.error("Failed to load store list");
+        toast.error("Gagal memuat daftar toko");
       });
     }
   }, [isSuperAdmin, selectedStoreId]);
@@ -67,8 +67,8 @@ export default function StockManagementPage() {
         setProducts(res.items || []);
       }
     } catch (error) {
-      console.error("Failed to fetch inventory:", error);
-      toast.error("Failed to fetch inventory details.");
+      console.error("Gagal memuat inventori:", error);
+      toast.error("Gagal memuat detail inventori.");
     } finally {
       setIsLoading(false);
     }
@@ -94,10 +94,10 @@ export default function StockManagementPage() {
         <div>
           <h2 className="text-3xl font-bold tracking-tight flex items-center gap-2">
             <CopyPlus className="h-8 w-8 text-primary" />
-            Stock Inventory
+            Inventori Stok
           </h2>
           <p className="text-muted-foreground mt-1">
-            Manage product quantities and trace manual stock adjustments.
+            Kelola kuantitas produk dan lacak audit penyesuaian stok manual.
           </p>
         </div>
 
@@ -109,7 +109,7 @@ export default function StockManagementPage() {
               onValueChange={(val) => setSelectedStoreId(val)}
             >
               <SelectTrigger className="w-[300px] border-primary/50 shadow-sm">
-                <SelectValue placeholder="Select a targeted store..." />
+                <SelectValue placeholder="Pilih toko target..." />
               </SelectTrigger>
               <SelectContent>
                 {stores.map((store) => (
@@ -121,7 +121,7 @@ export default function StockManagementPage() {
             </Select>
           ) : (
             <div className="px-4 py-2 bg-primary/10 text-primary font-medium rounded-lg border border-primary/20">
-              Active Scope: {user?.managedStore?.name || "Unknown Store"}
+              Cakupan Aktif: {user?.managedStore?.name || "Toko Tidak Diketahui"}
             </div>
           )}
         </div>

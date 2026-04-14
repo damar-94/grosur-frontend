@@ -47,7 +47,7 @@ export function StockHistoryModal({
         .getStockJournals({ productId: product.id, storeId, limit: 50 })
         .then((res) => {
           if (res.success) {
-            setJournals(res.data);
+            setJournals(res.journals || []);
           }
         })
         .catch(() => {
@@ -63,11 +63,11 @@ export function StockHistoryModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
+      <DialogContent className="max-w-[90vw] md:max-w-4xl lg:max-w-6xl max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Riwayat Stok / Jurnal</DialogTitle>
           <DialogDescription>
-            Audit riwayat perubahan stok untuk <strong>{product.name}</strong>. Data ini berifat read-only.
+            Audit riwayat perubahan stok untuk <strong>{product.name}</strong>. Data ini bersifat read-only (hanya-baca).
           </DialogDescription>
         </DialogHeader>
 
@@ -107,17 +107,17 @@ export function StockHistoryModal({
                       <TableCell>
                         <div className="flex flex-col">
                           <span className="font-medium text-sm">
-                            {journal.user?.name || "System/Unknown"}
+                            {journal.user?.name || "Sistem / Anonim"}
                           </span>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2 text-sm">
-                          <span className="text-muted-foreground">{journal.oldQuantity}</span>
+                          <span className="text-muted-foreground">{journal.oldQty}</span>
                           <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                          <span className="font-bold">{journal.newQuantity}</span>
+                          <span className="font-bold">{journal.newQty}</span>
                           <span className={`ml-2 font-medium ${isIncoming ? 'text-green-600' : 'text-red-500'}`}>
-                            ({isIncoming ? "+" : "-"}{journal.quantity})
+                            ({isIncoming ? "+" : "-"}{Math.abs(journal.change)})
                           </span>
                         </div>
                       </TableCell>

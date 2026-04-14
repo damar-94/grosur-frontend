@@ -54,96 +54,109 @@ export function StockTable({
   }
 
   return (
-    <div className="rounded-md border">
+    <div className="rounded-md border bg-white overflow-hidden shadow-sm">
       <Table>
-        <TableHeader>
+        <TableHeader className="bg-muted/50">
           <TableRow>
-            <TableHead className="w-[80px]">#</TableHead>
-            <TableHead className="w-[300px]">Product</TableHead>
-            <TableHead>Category</TableHead>
-            <TableHead>Current Stock</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+            <TableHead className="w-[50px] font-semibold">#</TableHead>
+            <TableHead className="w-[80px]">Cover</TableHead>
+            <TableHead className="min-w-[250px] font-semibold">Produk</TableHead>
+            <TableHead className="font-semibold">Kategori</TableHead>
+            <TableHead className="font-semibold">Stok Saat Ini</TableHead>
+            <TableHead className="text-right font-semibold">Aksi</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {products.map((product, index) => {
-            const qty = product.inventory?.quantity ?? 0;
-            const isOutOfStock = qty <= 0;
-            const isLowStock = qty > 0 && qty <= 5; // Arbitrary low stock threshold
+          {products.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={6} className="h-32 text-center">
+                <div className="flex flex-col items-center justify-center text-muted-foreground">
+                  <p className="font-medium">
+                    Tidak ada produk aktif yang ditemukan di toko ini.
+                  </p>
+                </div>
+              </TableCell>
+            </TableRow>
+          ) : (
+            products.map((product, index) => {
+              const qty = product.inventory?.quantity ?? 0;
+              const isOutOfStock = qty <= 0;
+              const isLowStock = qty > 0 && qty <= 5;
 
-            return (
-              <TableRow key={product.id}>
-                <TableCell className="font-medium text-muted-foreground">
-                  {index + 1}
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <div className="relative h-10 w-10 flex-shrink-0 bg-muted rounded-md overflow-hidden border">
-                      {product.image ? (
-                        <Image
-                          src={product.image}
-                          alt={product.name}
-                          fill
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-[10px] text-muted-foreground">
-                          IMG
-                        </div>
-                      )}
+              return (
+                <TableRow key={product.id}>
+                  <TableCell className="font-medium text-muted-foreground">
+                    {index + 1}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <div className="relative h-10 w-10 flex-shrink-0 bg-muted rounded-md overflow-hidden border">
+                        {product.image ? (
+                          <Image
+                            src={product.image}
+                            alt={product.name}
+                            fill
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-[10px] text-muted-foreground">
+                            IMG
+                          </div>
+                        )}
+                      </div>
+                      <span
+                        className="font-medium line-clamp-1"
+                        title={product.name}
+                      >
+                        {product.name}
+                      </span>
                     </div>
-                    <span
-                      className="font-medium line-clamp-1"
-                      title={product.name}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    <Badge variant="outline" className="text-xs">
+                      {product.category}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={
+                        isOutOfStock
+                          ? "destructive"
+                          : isLowStock
+                            ? "warning"
+                            : "default"
+                      }
+                      className={
+                        !isOutOfStock && !isLowStock
+                          ? "bg-green-500 hover:bg-green-600"
+                          : ""
+                      }
                     >
-                      {product.name}
-                    </span>
-                  </div>
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  <Badge variant="outline" className="text-xs">
-                    {product.category}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    variant={
-                      isOutOfStock
-                        ? "destructive"
-                        : isLowStock
-                          ? "warning"
-                          : "default"
-                    }
-                    className={
-                      !isOutOfStock && !isLowStock
-                        ? "bg-green-500 hover:bg-green-600"
-                        : ""
-                    }
-                  >
-                    {qty} Units
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => onAdjustStock(product)}
-                    >
-                      <Edit3 className="mr-2 h-3.5 w-3.5" /> Sesuaikan
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => onViewHistory(product)}
-                    >
-                      <History className="mr-2 h-3.5 w-3.5" /> Riwayat
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            );
-          })}
+                      {qty} Unit
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onAdjustStock(product)}
+                      >
+                        <Edit3 className="mr-2 h-3.5 w-3.5" /> Sesuaikan
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => onViewHistory(product)}
+                      >
+                        <History className="mr-2 h-3.5 w-3.5" /> Riwayat
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })
+          )}
         </TableBody>
       </Table>
     </div>

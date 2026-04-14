@@ -17,9 +17,9 @@ export interface StockJournal {
   id: string;
   stockId: string;
   type: "IN" | "OUT";
-  quantity: number;
-  oldQuantity: number;
-  newQuantity: number;
+  change: number;
+  oldQty: number;
+  newQty: number;
   reason: string;
   createdAt: string;
   user?: {
@@ -30,7 +30,7 @@ export interface StockJournal {
 
 export interface StockJournalResponse {
   success: boolean;
-  data: StockJournal[];
+  journals: StockJournal[];
   meta: {
     total: number;
     page: number;
