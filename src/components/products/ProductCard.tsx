@@ -16,6 +16,27 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
   const isOutOfStock = product.inventory.quantity <= 0;
   const price = typeof product.price === "string" ? parseFloat(product.price) : product.price;
 
+  let discountedPrice = price;
+  let discountLabel = "";
+
+  if (product.discount) {
+    if (product.discount.type === "PERCENT") {
+      const val = typeof product.discount.value === "string" ? parseFloat(product.discount.value) : product.discount.value;
+      const calculated = (price * val) / 100;
+      const actualDiscount = product.discount.maxDiscount 
+        ? Math.min(calculated, typeof product.discount.maxDiscount === "string" ? parseFloat(product.discount.maxDiscount) : product.discount.maxDiscount)
+        : calculated;
+      discountedPrice = price - actualDiscount;
+      discountLabel = `${val}%`;
+    } else if (product.discount.type === "NOMINAL") {
+      const val = typeof product.discount.value === "string" ? parseFloat(product.discount.value) : product.discount.value;
+      discountedPrice = Math.max(0, price - val);
+      discountLabel = `Rp ${(val/1000).toFixed(0)}rb`;
+    } else if (product.discount.type === "B1G1") {
+      discountLabel = "B1G1";
+    }
+  }
+
   return (
     <Card className="h-full flex flex-col overflow-hidden group hover:border-primary/50 transition-colors">
       <Link href={`/products/${product.slug}?storeId=${product.inventory.storeId}`} className="flex-1 flex flex-col">
@@ -31,6 +52,13 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
           ) : (
             <div className="w-full h-full flex items-center justify-center text-muted-foreground">
               No Image
+            </div>
+          )}
+          {discountLabel && !isOutOfStock && (
+            <div className="absolute top-2 left-2 z-10">
+              <Badge className="bg-red-500 hover:bg-red-600 text-white border-none font-bold px-2 py-0.5 rounded-sm">
+                {discountLabel} OFF
+              </Badge>
             </div>
           )}
           {isOutOfStock && (
@@ -56,12 +84,19 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
       </Link>
 
       <CardFooter className="p-4 pt-0 flex flex-col gap-3">
-        <div className="flex items-center justify-between w-full">
-          <div className="text-xl font-bold text-primary">
-            Rp {price.toLocaleString("id-ID")}
-          </div>
-          <div className="text-xs text-muted-foreground">
-            Stock: {product.inventory.quantity}
+        <div className="flex flex-col w-full">
+          {product.discount && product.discount.type !== "B1G1" && (
+             <div className="text-xs text-muted-foreground line-through">
+               Rp {price.toLocaleString("id-ID")}
+             </div>
+          )}
+          <div className="flex items-center justify-between w-full">
+            <div className="text-xl font-extrabold text-[#00997a]">
+              Rp {discountedPrice.toLocaleString("id-ID")}
+            </div>
+            <div className="text-[10px] sm:text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+              Stok: {product.inventory.quantity}
+            </div>
           </div>
         </div>
 
