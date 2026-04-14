@@ -38,6 +38,10 @@ export default function Header() {
               </Link>
             )}
 
+            <Link href="/vouchers" className="text-sm font-bold text-amber-600 hover:text-amber-700">
+              Klaim Voucher
+            </Link>
+
             <Link href="/profile" className="text-sm font-medium">
               {user.email}
             </Link>
