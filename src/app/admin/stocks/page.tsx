@@ -8,6 +8,7 @@ import { useAppStore } from "@/stores/useAppStore";
 import { Product, productService } from "@/services/productService";
 import { StockTable } from "@/components/admin/stocks/StockTable";
 import { StockAdjustmentModal } from "@/components/admin/stocks/StockAdjustmentModal";
+import { StockHistoryModal } from "@/components/admin/stocks/StockHistoryModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
@@ -31,6 +32,7 @@ export default function StockManagementPage() {
   const [isLoading, setIsLoading] = React.useState(true);
 
   const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = React.useState(false);
   const [selectedProduct, setSelectedProduct] = React.useState<Product | null>(null);
 
   // 1. Fetch Master Stores (Only relevant for SUPER_ADMIN)
@@ -44,7 +46,7 @@ export default function StockManagementPage() {
           }
         }
       }).catch(() => {
-        toast.error("Failed to load store list");
+        toast.error("Gagal memuat daftar toko");
       });
     }
   }, [isSuperAdmin, selectedStoreId]);
@@ -65,8 +67,8 @@ export default function StockManagementPage() {
         setProducts(res.items || []);
       }
     } catch (error) {
-      console.error("Failed to fetch inventory:", error);
-      toast.error("Failed to fetch inventory details.");
+      console.error("Gagal memuat inventori:", error);
+      toast.error("Gagal memuat detail inventori.");
     } finally {
       setIsLoading(false);
     }
@@ -81,16 +83,21 @@ export default function StockManagementPage() {
     setIsModalOpen(true);
   };
 
+  const handleHistoryClick = (product: Product) => {
+    setSelectedProduct(product);
+    setIsHistoryModalOpen(true);
+  };
+
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0 mb-8 border-b pb-4">
         <div>
           <h2 className="text-3xl font-bold tracking-tight flex items-center gap-2">
             <CopyPlus className="h-8 w-8 text-primary" />
-            Stock Inventory
+            Inventori Stok
           </h2>
           <p className="text-muted-foreground mt-1">
-            Manage product quantities and trace manual stock adjustments.
+            Kelola kuantitas produk dan lacak audit penyesuaian stok manual.
           </p>
         </div>
 
@@ -102,7 +109,7 @@ export default function StockManagementPage() {
               onValueChange={(val) => setSelectedStoreId(val)}
             >
               <SelectTrigger className="w-[300px] border-primary/50 shadow-sm">
-                <SelectValue placeholder="Select a targeted store..." />
+                <SelectValue placeholder="Pilih toko target..." />
               </SelectTrigger>
               <SelectContent>
                 {stores.map((store) => (
@@ -114,7 +121,7 @@ export default function StockManagementPage() {
             </Select>
           ) : (
             <div className="px-4 py-2 bg-primary/10 text-primary font-medium rounded-lg border border-primary/20">
-              Active Scope: {user?.managedStore?.name || "Unknown Store"}
+              Cakupan Aktif: {user?.managedStore?.name || "Toko Tidak Diketahui"}
             </div>
           )}
         </div>
@@ -134,6 +141,7 @@ export default function StockManagementPage() {
             isLoading={isLoading}
             storeSelected={!!selectedStoreId}
             onAdjustStock={handleAdjustClick}
+            onViewHistory={handleHistoryClick}
           />
         )}
       </div>
@@ -144,6 +152,13 @@ export default function StockManagementPage() {
         product={selectedProduct}
         storeId={selectedStoreId || ""}
         onSuccess={fetchInventory}
+      />
+
+      <StockHistoryModal
+        isOpen={isHistoryModalOpen}
+        onOpenChange={setIsHistoryModalOpen}
+        product={selectedProduct}
+        storeId={selectedStoreId || ""}
       />
     </div>
   );
