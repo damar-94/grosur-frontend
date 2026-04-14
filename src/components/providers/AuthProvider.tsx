@@ -23,8 +23,11 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         } else {
           setUser(null);
         }
-      } catch (error) {
-        console.error("Auth sync failed", error);
+      } catch (error: any) {
+        // Only log error if it's not a standard 401 Unauthenticated
+        if (error?.response?.status !== 401) {
+          console.error("Auth sync failed", error);
+        }
         setUser(null);
       } finally {
         setLoading(false);
