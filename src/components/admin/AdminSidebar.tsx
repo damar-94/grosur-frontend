@@ -11,6 +11,7 @@ import {
   Store,
   Users,
   Tags,
+  BadgePercent,
 } from "lucide-react";
 
 import {
@@ -34,6 +35,7 @@ const adminMenuItems = [
   { title: "Products", url: "/admin/products", icon: Package, roles: ["SUPER_ADMIN", "STORE_ADMIN"] },
   { title: "Stocks", url: "/admin/stocks", icon: Box, roles: ["SUPER_ADMIN", "STORE_ADMIN"] },
   { title: "Orders", url: "/admin/orders", icon: ShoppingCart, roles: ["SUPER_ADMIN", "STORE_ADMIN"] },
+  { title: "Discounts", url: "/admin/discounts", icon: BadgePercent, roles: ["SUPER_ADMIN", "STORE_ADMIN"] },
   { title: "Reports", url: "/admin/reports", icon: FileText, roles: ["SUPER_ADMIN", "STORE_ADMIN"] },
 ];
 
