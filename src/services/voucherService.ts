@@ -31,4 +31,9 @@ export const voucherService = {
     const response = await api.post("/vouchers/claim", payload);
     return response.data;
   },
+
+  validateVoucher: async (code: string): Promise<{ success: boolean; data: Voucher }> => {
+    const response = await api.post("/vouchers/validate", { code });
+    return response.data;
+  },
 };
