@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { CopyPlus } from "lucide-react";
+import { CopyPlus, ArrowLeftRight } from "lucide-react";
 import { toast } from "sonner";
 
 import { useAppStore } from "@/stores/useAppStore";
@@ -9,7 +9,9 @@ import { Product, productService } from "@/services/productService";
 import { StockTable } from "@/components/admin/stocks/StockTable";
 import { StockAdjustmentModal } from "@/components/admin/stocks/StockAdjustmentModal";
 import { StockHistoryModal } from "@/components/admin/stocks/StockHistoryModal";
+import { StockTransferModal } from "@/components/admin/stocks/StockTransferModal";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -33,6 +35,7 @@ export default function StockManagementPage() {
 
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = React.useState(false);
+  const [isTransferModalOpen, setIsTransferModalOpen] = React.useState(false);
   const [selectedProduct, setSelectedProduct] = React.useState<Product | null>(null);
 
   // 1. Fetch Master Stores (Only relevant for SUPER_ADMIN)
@@ -103,6 +106,16 @@ export default function StockManagementPage() {
 
         {/* Dynamic Context View */}
         <div className="flex items-center gap-3">
+          {isSuperAdmin && (
+            <Button 
+              variant="default" 
+              className="bg-blue-600 hover:bg-blue-700 shadow-md"
+              onClick={() => setIsTransferModalOpen(true)}
+            >
+              <ArrowLeftRight className="mr-2 h-4 w-4" /> Transfer Stok
+            </Button>
+          )}
+
           {isSuperAdmin ? (
             <Select
               value={selectedStoreId}
@@ -160,6 +173,15 @@ export default function StockManagementPage() {
         product={selectedProduct}
         storeId={selectedStoreId || ""}
       />
+
+      {isSuperAdmin && (
+        <StockTransferModal
+          isOpen={isTransferModalOpen}
+          onOpenChange={setIsTransferModalOpen}
+          stores={stores}
+          onSuccess={fetchInventory}
+        />
+      )}
     </div>
   );
 }

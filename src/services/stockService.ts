@@ -7,6 +7,14 @@ export interface StockUpdateRequest {
   reason: string;
 }
 
+export interface StockTransferRequest {
+  productId: string;
+  fromStoreId: string;
+  toStoreId: string;
+  quantity: number;
+  reason: string;
+}
+
 export interface StockUpdateResponse {
   success: boolean;
   message: string;
@@ -43,6 +51,11 @@ export interface StockJournalResponse {
 export const stockService = {
   updateStock: async (payload: StockUpdateRequest): Promise<StockUpdateResponse> => {
     const response = await api.patch("/stocks/update", payload);
+    return response.data;
+  },
+
+  transferStock: async (payload: StockTransferRequest): Promise<StockUpdateResponse> => {
+    const response = await api.post("/stocks/transfer", payload);
     return response.data;
   },
 
