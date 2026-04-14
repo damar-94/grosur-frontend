@@ -145,7 +145,7 @@ export function StockTransferModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl">
+      <DialogContent className="sm:max-w-xl md:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Transfer Stok Antar Cabang</DialogTitle>
           <DialogDescription>

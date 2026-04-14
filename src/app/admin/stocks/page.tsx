@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { CopyPlus } from "lucide-react";
+import { CopyPlus, ArrowLeftRight } from "lucide-react";
 import { toast } from "sonner";
 
 import { useAppStore } from "@/stores/useAppStore";
@@ -12,7 +12,6 @@ import { StockHistoryModal } from "@/components/admin/stocks/StockHistoryModal";
 import { StockTransferModal } from "@/components/admin/stocks/StockTransferModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { CopyPlus, ArrowLeftRight } from "lucide-react";
 import {
   Select,
   SelectContent,
