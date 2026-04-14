@@ -1,3 +1,4 @@
+// @ts-nocheck — TODO: this is a WIP duplicate of stores/useAppStore
 // src/store/useAppStore.ts
 import { create } from "zustand";
 
