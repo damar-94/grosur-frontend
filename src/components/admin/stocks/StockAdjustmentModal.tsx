@@ -31,9 +31,9 @@ import { stockService } from "@/services/stockService";
 
 const stockAdjustmentSchema = z.object({
   change: z.coerce.number().refine((val) => val !== 0, {
-    message: "Change quantity cannot be 0",
+    message: "Jumlah perubahan tidak boleh 0",
   }),
-  reason: z.string().min(5, "Please provide a descriptive reason (min 5 chars)"),
+  reason: z.string().min(5, "Harap berikan alasan deskriptif (min 5 karakter)"),
 });
 
 type StockAdjustmentValues = z.infer<typeof stockAdjustmentSchema>;
@@ -78,7 +78,7 @@ export function StockAdjustmentModal({
     if (!product || !storeId) return;
 
     if (finalStock < 0) {
-      toast.error("Final stock cannot be negative!");
+      toast.error("Stok akhir tidak boleh negatif!");
       return;
     }
 
@@ -90,12 +90,12 @@ export function StockAdjustmentModal({
         change: values.change,
         reason: values.reason,
       });
-      toast.success(`Stock adjusted successfully. ${values.change > 0 ? '+' : ''}${values.change} units.`);
+      toast.success(`Stok berhasil disesuaikan. ${values.change > 0 ? '+' : ''}${values.change} unit.`);
       onSuccess();
       onOpenChange(false);
     } catch (error) {
       const err = error as { response?: { data?: { message?: string } } };
-      const msg = err.response?.data?.message || "Failed to submit stock adjustment.";
+      const msg = err.response?.data?.message || "Gagal menyimpan penyesuaian stok.";
       toast.error(msg);
     } finally {
       setIsLoading(false);
@@ -108,9 +108,9 @@ export function StockAdjustmentModal({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Adjust Stock Inventory</DialogTitle>
+          <DialogTitle>Sesuaikan Inventori Stok</DialogTitle>
           <DialogDescription>
-            Target item: <strong>{product.name}</strong>
+            Item target: <strong>{product.name}</strong>
           </DialogDescription>
         </DialogHeader>
 
@@ -118,7 +118,7 @@ export function StockAdjustmentModal({
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
             
             <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/20">
-              <span className="text-sm font-medium text-muted-foreground">Current Base Stock:</span>
+              <span className="text-sm font-medium text-muted-foreground">Stok Dasar Saat Ini:</span>
               <span className="font-bold text-lg">{currentStock}</span>
             </div>
 
@@ -127,11 +127,11 @@ export function StockAdjustmentModal({
               name="change"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Adjustment (Use negative for deduction)</FormLabel>
+                  <FormLabel>Penyesuaian (Gunakan angka negatif untuk pengurangan)</FormLabel>
                   <FormControl>
                     <Input 
                       type="number"
-                      placeholder="e.g. 10 or -5" 
+                      placeholder="misal: 10 atau -5" 
                       disabled={isLoading} 
                       {...field} 
                     />
@@ -146,18 +146,18 @@ export function StockAdjustmentModal({
               name="reason"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Reason for adjustment</FormLabel>
+                  <FormLabel>Alasan penyesuaian</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. Broken package, RESTOCK#123" disabled={isLoading} {...field} />
+                    <Input placeholder="misal: Kemasan rusak, RESTOCK#123" disabled={isLoading} {...field} />
                   </FormControl>
-                  <FormDescription>This will be logged for auditing</FormDescription>
+                  <FormDescription>Catatan ini akan disimpan untuk audit</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
             <div className="flex items-center justify-between p-4 mt-2 rounded-lg border bg-muted/40">
-              <span className="text-sm font-medium">Preview Final Stock:</span>
+              <span className="text-sm font-medium">Pratinjau Stok Akhir:</span>
               <div className="flex items-center gap-2">
                 {changeValue > 0 && <TrendingUp className="h-4 w-4 text-green-500" />}
                 {changeValue < 0 && <TrendingDown className="h-4 w-4 text-red-500" />}
@@ -167,16 +167,16 @@ export function StockAdjustmentModal({
               </div>
             </div>
             {isInvalidStock && (
-              <p className="text-xs text-destructive text-right font-medium">Preview results in invalid negative value.</p>
+              <p className="text-xs text-destructive text-right font-medium">Pratinjau menghasilkan nilai negatif yang tidak valid.</p>
             )}
 
             <DialogFooter className="pt-4">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
-                Cancel
+                Batal
               </Button>
               <Button type="submit" disabled={isLoading || isInvalidStock}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Submit Adjustment
+                Simpan Penyesuaian
               </Button>
             </DialogFooter>
           </form>

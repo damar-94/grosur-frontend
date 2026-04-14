@@ -62,7 +62,7 @@ export default function StockManagementPage() {
       const res = await productService.getProducts({ storeId: selectedStoreId, limit: 100 }); 
       // Limits to 100 arbitrarily. In real world, pagination needed.
       if (res.success) {
-        setProducts(res.data);
+        setProducts(res.items || []);
       }
     } catch (error) {
       console.error("Failed to fetch inventory:", error);
