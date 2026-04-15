@@ -36,7 +36,7 @@ const adminMenuItems = [
   { title: "Stocks", url: "/admin/stocks", icon: Box, roles: ["SUPER_ADMIN", "STORE_ADMIN"] },
   { title: "Orders", url: "/admin/orders", icon: ShoppingCart, roles: ["SUPER_ADMIN", "STORE_ADMIN"] },
   { title: "Discounts", url: "/admin/discounts", icon: BadgePercent, roles: ["SUPER_ADMIN", "STORE_ADMIN"] },
-  { title: "Reports", url: "/admin/reports", icon: FileText, roles: ["SUPER_ADMIN", "STORE_ADMIN"] },
+  { title: "Sales", url: "/admin/sales", icon: FileText, roles: ["SUPER_ADMIN", "STORE_ADMIN"] },
 ];
 
 export function AdminSidebar() {
