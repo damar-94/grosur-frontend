@@ -1,6 +1,8 @@
 "use client";
 
 import Header from "@/components/Header";
+import AddressList from "@/components/profile/AddressList";
+import ChangeEmailForm from "@/components/profile/ChangeEmailForm";
 import ProfileForm from "@/components/profile/ProfileForm";
 import { useAppStore } from "@/stores/useAppStore";
 import { useRouter } from "next/navigation";
@@ -45,6 +47,8 @@ export default function ProfilePage() {
 
 
                     <ProfileForm />
+                    <ChangeEmailForm />
+                    <AddressList />
                 </div>
             </div>
         </main>
