@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import AddressList from "@/components/profile/AddressList";
 import ChangeEmailForm from "@/components/profile/ChangeEmailForm";
 import ProfileForm from "@/components/profile/ProfileForm";
+import ReferralCard from "@/components/profile/ReferralCard";
 import { useAppStore } from "@/stores/useAppStore";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -45,7 +46,7 @@ export default function ProfilePage() {
                         </p>
                     </div>
 
-
+                    <ReferralCard />
                     <ProfileForm />
                     <ChangeEmailForm />
                     <AddressList />

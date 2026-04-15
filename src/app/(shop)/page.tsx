@@ -30,7 +30,7 @@ export default function HomePage() {
     const fetchNearestStore = async () => {
       setIsFetchingStore(true);
       try {
-        const response = await api.post("/store/nearest", {
+        const response = await api.post("/stores/nearest", {
           latitude,
           longitude,
         });
