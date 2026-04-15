@@ -76,19 +76,8 @@ export interface Order {
 
 /** Fetch all addresses of the logged-in user */
 export async function fetchAddresses(): Promise<Address[]> {
-  try {
-    const res = await api.get("/addresses");
-    return res.data?.data || [];
-  } catch (error) {
-    console.error("fetchAddresses error:", error);
-    // Try fallback to singular /address if plural fails
-    try {
-      const resVal = await api.get("/address");
-      return resVal.data?.data || [];
-    } catch (singularError) {
-      throw singularError;
-    }
-  }
+  const res = await api.get("/addresses");
+  return res.data?.data || [];
 }
 
 /** Create a new order (checkout) */

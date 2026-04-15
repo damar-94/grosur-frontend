@@ -45,7 +45,7 @@ export default function AddressForm({ onSuccess }: { onSuccess?: () => void }) {
     useEffect(() => {
         const fetchProvinces = async () => {
             setIsLoadingProvinces(true);
-            const endpoints = ["/rajaongkir/provinces", "/shipping/provinces", "/provinces", "/addresses/provinces"];
+            const endpoints = ["/shipping/provinces"];
             
             for (const endpoint of endpoints) {
                 try {
@@ -71,11 +71,7 @@ export default function AddressForm({ onSuccess }: { onSuccess?: () => void }) {
             const fetchCities = async () => {
                 setIsLoadingCities(true);
                 const endpoints = [
-                    `/rajaongkir/cities?provinceId=${selectedProvinceId}`,
-                    `/shipping/cities?provinceId=${selectedProvinceId}`,
-                    `/cities?provinceId=${selectedProvinceId}`,
-                    `/rajaongkir/city?province=${selectedProvinceId}`,
-                    `/locations/cities?province=${selectedProvinceId}`
+                    `/shipping/cities?provinceId=${selectedProvinceId}`
                 ];
 
                 for (const endpoint of endpoints) {
@@ -114,7 +110,7 @@ export default function AddressForm({ onSuccess }: { onSuccess?: () => void }) {
             };
 
             // Call your address controller (which will also hit OpenCage to get Lat/Lng!)
-            await api.post("/address", payload);
+            await api.post("/addresses", payload);
 
             if (onSuccess) onSuccess();
 
