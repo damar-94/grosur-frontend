@@ -1,4 +1,3 @@
-// src/app/login/page.tsx
 "use client";
 
 import { useState, Suspense } from "react";
@@ -9,6 +8,7 @@ import { loginSchema, LoginFormValues } from "@/schemas/auth.schema";
 import { api } from "@/lib/axiosInstance";
 import { useAppStore } from "@/stores/useAppStore";
 import Link from "next/link";
+import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 
 function LoginForm() {
   const router = useRouter();
@@ -22,24 +22,41 @@ function LoginForm() {
     resolver: zodResolver(loginSchema),
   });
 
+  // Standard Email/Password Login
   const onSubmit = async (data: LoginFormValues) => {
     try {
       setServerError("");
       const res = await api.post("/auth/login", data);
 
       const userData = res.data.data;
-      setUser(userData); // Save to Zustand
+      setUser(userData);
 
-      // Role-based redirection
-      if (userData.role === "SUPER_ADMIN") {
-        router.push("/admin/dashboard");
-      } else if (userData.role === "STORE_ADMIN") {
-        router.push("/store-admin/dashboard");
-      } else {
-        router.push("/"); // Standard USER goes to homepage
-      }
+      if (userData.role === "SUPER_ADMIN") router.push("/admin/dashboard");
+      else if (userData.role === "STORE_ADMIN") router.push("/store-admin/dashboard");
+      else router.push("/");
     } catch (error: any) {
       setServerError(error.response?.data?.message || "Login gagal");
+    }
+  };
+
+  // Google Social Login Flow
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    try {
+      setServerError("");
+      // Send the Google token to our backend API we wrote earlier
+      const res = await api.post("/auth/google", {
+        credential: credentialResponse.credential,
+      });
+
+      // Based on our auth.controller.ts, user data is inside res.data.data.user
+      const userData = res.data.data.user;
+      setUser(userData);
+
+      if (userData.role === "SUPER_ADMIN") router.push("/admin/dashboard");
+      else if (userData.role === "STORE_ADMIN") router.push("/store-admin/dashboard");
+      else router.push("/");
+    } catch (error: any) {
+      setServerError(error.response?.data?.message || "Google Login gagal");
     }
   };
 
@@ -81,6 +98,12 @@ function LoginForm() {
           {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
         </div>
 
+        <div className="flex justify-end">
+          <Link href="/forgot-password" className="text-xs font-medium text-[#00997a] hover:underline">
+            Lupa Password?
+          </Link>
+        </div>
+
         <button
           type="submit"
           disabled={isSubmitting}
@@ -89,6 +112,25 @@ function LoginForm() {
           {isSubmitting ? "Memproses..." : "Masuk"}
         </button>
       </form>
+
+      {/* --- DIVIDER --- */}
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-gray-200"></div>
+        </div>
+        <div className="relative flex justify-center text-sm">
+          <span className="bg-white px-2 text-[#8e8e8e]">Atau masuk dengan</span>
+        </div>
+      </div>
+
+      {/* --- GOOGLE BUTTON --- */}
+      <div className="flex justify-center">
+        <GoogleLogin
+          onSuccess={handleGoogleSuccess}
+          onError={() => setServerError("Gagal terhubung dengan Google")}
+          useOneTap
+        />
+      </div>
 
       <p className="text-sm text-center text-[#8e8e8e]">
         Belum punya akun? <Link href="/register" className="text-[#00997a] font-bold hover:underline">Daftar di sini</Link>
@@ -99,12 +141,15 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center p-4 bg-[#f3f5f7]">
-      <div className="w-full max-w-md">
-        <Suspense fallback={<div className="text-center text-[#8e8e8e]">Memuat...</div>}>
-          <LoginForm />
-        </Suspense>
-      </div>
-    </main>
+    // Wrap the entire page with the Provider so the Google Button can communicate with the API
+    <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}>
+      <main className="flex min-h-screen items-center justify-center p-4 bg-[#f3f5f7]">
+        <div className="w-full max-w-md">
+          <Suspense fallback={<div className="text-center text-[#8e8e8e]">Memuat...</div>}>
+            <LoginForm />
+          </Suspense>
+        </div>
+      </main>
+    </GoogleOAuthProvider>
   );
 }
