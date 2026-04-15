@@ -13,21 +13,28 @@ interface RegisterFormValues {
 }
 
 export default function RegisterPage() {
-  console.log("DEBUG GOOGLE ID:", process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID);
   const router = useRouter();
   const setUser = useAppStore((state) => state.setUser);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
 
+  // GROS-98: State for referral code input
+  const [referralCode, setReferralCode] = useState("");
+
   const { register, handleSubmit, formState: { errors } } = useForm<RegisterFormValues>();
 
-  // 1. Standard Email Registration (Sends Verification Link)
+  // 1. Standard Email Registration
   const onSubmit = async (data: RegisterFormValues) => {
     setIsLoading(true);
     setMessage({ type: "", text: "" });
 
     try {
-      await api.post("/auth/register", { email: data.email });
+      // GROS-97: Sending email and referral code to backend
+      await api.post("/auth/register", {
+        email: data.email,
+        referredBy: referralCode
+      });
+
       setMessage({
         type: "success",
         text: "Berhasil! Silakan cek email Anda untuk tautan verifikasi."
@@ -42,14 +49,14 @@ export default function RegisterPage() {
     }
   };
 
-  // 2. Google Social Registration (Auto-verifies and logs in)
+  // 2. Google Social Registration
   const handleGoogleSuccess = async (credentialResponse: any) => {
     try {
       const res = await api.post("/auth/google", {
         credential: credentialResponse.credential,
+        referredBy: referralCode // GROS-97: Pass referral code to Google flow too
       });
 
-      // Save user to Zustand and redirect to home
       setUser(res.data.data.user);
       router.push("/");
     } catch (error) {
@@ -59,7 +66,6 @@ export default function RegisterPage() {
   };
 
   return (
-    // 👇 THIS IS THE MISSING WRAPPER 👇
     <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}>
       <main className="min-h-screen bg-[#f3f4f5] flex items-center justify-center p-4 font-sans">
         <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-sm border border-gray-100">
@@ -75,8 +81,7 @@ export default function RegisterPage() {
             </div>
           )}
 
-          {/* Email Registration Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
               <input
@@ -91,6 +96,18 @@ export default function RegisterPage() {
               {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
             </div>
 
+            {/* GROS-98: Referral Code Input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Kode Referral (Opsional)</label>
+              <input
+                type="text"
+                value={referralCode}
+                onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                className="w-full p-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-[#59cfb7] transition-all"
+                placeholder="CONTOH: ANDRE123"
+              />
+            </div>
+
             <button
               type="submit"
               disabled={isLoading || message.type === "success"}
@@ -100,7 +117,6 @@ export default function RegisterPage() {
             </button>
           </form>
 
-          {/* The "Or" Divider */}
           <div className="relative flex items-center py-6">
             <div className="flex-grow border-t border-gray-200"></div>
             <span className="flex-shrink-0 mx-4 text-xs font-medium text-gray-400 uppercase tracking-wider">
@@ -109,19 +125,17 @@ export default function RegisterPage() {
             <div className="flex-grow border-t border-gray-200"></div>
           </div>
 
-          {/* Google Registration Button */}
           <div className="flex justify-center">
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
               onError={() => setMessage({ type: "error", text: "Google login dibatalkan" })}
               theme="outline"
               size="large"
-              width="100%"
+              width="350" // Fixed width warning (Google expects string of numbers or number)
               text="signup_with"
             />
           </div>
 
-          {/* Footer Link */}
           <p className="mt-8 text-center text-sm text-gray-600">
             Sudah punya akun?{" "}
             <Link href="/login" className="font-bold text-[#00997a] hover:underline">
