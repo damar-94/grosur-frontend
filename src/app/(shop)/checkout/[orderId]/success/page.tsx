@@ -92,11 +92,10 @@ export default function OrderSuccessPage() {
               <FiPackage size={14} />
               Status
             </div>
-            <span className={`text-xs font-bold px-3 py-1 rounded-full ${
-              isPaidAutomatically
-                ? "bg-emerald-100 text-emerald-600"
-                : "bg-amber-100 text-amber-600"
-            }`}>
+            <span className={`text-xs font-bold px-3 py-1 rounded-full ${isPaidAutomatically
+              ? "bg-emerald-100 text-emerald-600"
+              : "bg-amber-100 text-amber-600"
+              }`}>
               {isPaidAutomatically ? "Diproses" : "Menunggu Pembayaran"}
             </span>
           </div>
@@ -127,7 +126,7 @@ export default function OrderSuccessPage() {
             <div className="flex items-start justify-between px-5 py-3.5 gap-4">
               <div className="flex items-center gap-2 text-sm text-gray-500 shrink-0">
                 <FiMapPin size={14} />
-                Dikirim ke
+
               </div>
               <p className="text-sm text-right text-gray-700 leading-snug">
                 {order.address.name}<br />

@@ -22,7 +22,7 @@ interface CartItem {
 }
 
 export default function CartPage() {
-  const { user, setCartCount } = useAppStore();
+  const { user, setCartCount, isLoading: isAuthLoading } = useAppStore();
   const router = useRouter();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -44,12 +44,13 @@ export default function CartPage() {
   }, []);
 
   useEffect(() => {
+    if (isAuthLoading) return;
     if (!user) {
       router.push("/login");
       return;
     }
     fetchCart();
-  }, [user, router, fetchCart]);
+  }, [user, isAuthLoading, router, fetchCart]);
 
   const handleUpdateQuantity = async (cartId: string, newQty: number) => {
     if (newQty < 1) return;

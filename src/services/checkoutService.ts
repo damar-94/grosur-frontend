@@ -53,12 +53,12 @@ export interface OrderItem {
 export interface Order {
   id: string;
   orderNumber: string;
-  status: "PENDING" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED";
+  status: "WAITING_PAYMENT" | "WAITING_CONFIRMATION" | "PROCESSED" | "SENT" | "CONFIRMED" | "CANCELLED";
   totalAmount: number;
   shippingCost: number;
   paymentMethod: "MANUAL_TRANSFER" | "PAYMENT_GATEWAY";
-  paymentStatus: "PENDING" | "PAID" | "FAILED" | "REFUNDED";
-  paymentProofUrl?: string;
+  paymentStatus: "PENDING" | "PAID" | "REJECTED";
+  paymentProof?: string;
   paymentGatewayUrl?: string;
   notes?: string;
   address: Address;
@@ -90,12 +90,24 @@ export async function createOrder(payload: CheckoutPayload): Promise<Order> {
 export async function fetchOrders(params?: {
   page?: number;
   status?: string;
+  search?: string;
+  date?: string;
 }): Promise<{ orders: Order[]; total: number; page: number; totalPages: number }> {
   const query = new URLSearchParams();
   if (params?.page) query.set("page", String(params.page));
   if (params?.status) query.set("status", params.status);
+  if (params?.search) query.set("search", params.search);
+  if (params?.date) query.set("date", params.date);
   const res = await api.get(`/orders?${query.toString()}`);
-  return res.data.data;
+  // Backend returns { data: Order[], pagination: {...} }
+  const orders = res.data.data || [];
+  const pagination = res.data.pagination || {};
+  return {
+    orders,
+    total: pagination.totalRows || 0,
+    page: pagination.page || 1,
+    totalPages: pagination.totalPage || 1,
+  };
 }
 
 /** Fetch single order detail */
