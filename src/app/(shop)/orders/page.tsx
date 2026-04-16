@@ -49,6 +49,7 @@ export default function OrdersPage() {
       const filter = statusFilter === "ALL" ? undefined : statusFilter;
       const data = await fetchOrders({ 
         page, 
+        limit: 5,
         status: filter,
         search: searchQuery || undefined,
         date: dateFilter || undefined

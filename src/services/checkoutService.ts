@@ -89,12 +89,14 @@ export async function createOrder(payload: CheckoutPayload): Promise<Order> {
 /** Fetch all orders of the logged-in user */
 export async function fetchOrders(params?: {
   page?: number;
+  limit?: number;
   status?: string;
   search?: string;
   date?: string;
 }): Promise<{ orders: Order[]; total: number; page: number; totalPages: number }> {
   const query = new URLSearchParams();
   if (params?.page) query.set("page", String(params.page));
+  if (params?.limit) query.set("limit", String(params.limit));
   if (params?.status) query.set("status", params.status);
   if (params?.search) query.set("search", params.search);
   if (params?.date) query.set("date", params.date);
