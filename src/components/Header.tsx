@@ -4,10 +4,13 @@ import { useAppStore } from "@/stores/useAppStore";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/axiosInstance";
+import { ShoppingCart } from "lucide-react";
 
 export default function Header() {
-  const { user, logout } = useAppStore();
+  const { user, logout, cart } = useAppStore();
   const router = useRouter();
+
+  const cartItemCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
   const handleLogout = async () => {
     try {
@@ -37,6 +40,19 @@ export default function Header() {
                 Dashboard
               </Link>
             )}
+
+            <Link href="/vouchers" className="text-sm font-bold text-amber-600 hover:text-amber-700">
+              Klaim Voucher
+            </Link>
+
+            <Link href="/checkout" className="relative p-2 text-gray-600 hover:text-[#00997a] transition-colors">
+              <ShoppingCart className="h-6 w-6" />
+              {cartItemCount > 0 && (
+                <span className="absolute top-0 right-0 h-5 w-5 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white translate-x-1/3 -translate-y-1/3">
+                  {cartItemCount > 99 ? "99+" : cartItemCount}
+                </span>
+              )}
+            </Link>
 
             <Link href="/profile" className="text-sm font-medium">
               {user.email}

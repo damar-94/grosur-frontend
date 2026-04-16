@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Montserrat, Poppins, Geist } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import AuthProvider from "@/components/providers/AuthProvider";
+import { Toaster } from "@/components/ui/sonner";
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -31,9 +33,11 @@ export default function RootLayout({
   return (
     <html lang="id" className={cn("font-sans", geist.variable)}>
       <body className={`${montserrat.variable} ${poppins.variable} font-sans antialiased bg-background text-foreground flex flex-col min-h-screen`}>
-        {/* Only children are rendered here now! */}
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
+        <Toaster richColors position="top-right" />
       </body>
     </html>
   );
-}
+}

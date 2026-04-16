@@ -54,7 +54,6 @@ export default function HomePage() {
 
   return (
     <div className="mx-auto max-w-[1200px] space-y-4 pb-20 pt-0 md:space-y-6 md:px-6 md:pt-6">
-      
       {/* Geolocation & Store Status Banner */}
       <div className="px-4 pt-4 md:px-0 md:pt-0">
         {(geoLoading || isFetchingStore) && (
