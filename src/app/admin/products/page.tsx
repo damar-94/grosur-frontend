@@ -10,6 +10,7 @@ import {
   Trash2,
   PackageSearch,
   ImageIcon,
+  Store as StoreIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -24,6 +25,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Card,
   CardContent,
@@ -55,22 +63,46 @@ const formatRupiah = (value: number) =>
 
 export default function AdminProductsPage() {
   const router = useRouter();
-  const { user } = useAppStore();
+  const { user, nearestStore } = useAppStore();
+  const isSuperAdmin = user?.role === "SUPER_ADMIN";
 
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPage, setTotalPage] = useState(1);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [stores, setStores] = useState<{ id: string; name: string }[]>([]);
+  const [selectedStoreId, setSelectedStoreId] = useState<string>("");
 
-  // For STORE_ADMIN the storeId comes from the nearest store in app state;
-  // for SUPER_ADMIN we still need a storeId — use nearestStore if set.
-  const { nearestStore } = useAppStore();
-  const storeId = nearestStore?.id ?? "";
+  // Derive storeId based on role and selection
+  // 1. If Store Admin, use their managed store
+  // 2. If Super Admin, use the selected store from the dropdown
+  // 3. Fallback to nearestStore if nothing else is available
+  const storeId = user?.role === "STORE_ADMIN" 
+    ? (user?.managedStore?.id ?? "")
+    : (selectedStoreId || (nearestStore?.id ?? ""));
+
+  // Fetch stores for Super Admin
+  useEffect(() => {
+    if (user?.role === "SUPER_ADMIN") {
+      productService.getStores().then((res) => {
+        if (res.success) {
+          setStores(res.data);
+          // If no store selected and we have stores, pick the first one as default
+          if (!selectedStoreId && res.data.length > 0) {
+            setSelectedStoreId(res.data[0].id);
+          }
+        }
+      });
+    }
+  }, [user, selectedStoreId]);
 
   const fetchProducts = useCallback(
     async (currentPage: number) => {
-      if (!storeId) return;
+      if (!storeId) {
+        setIsLoading(false);
+        return;
+      }
       setIsLoading(true);
       try {
         const res = await productService.getProducts({
@@ -119,25 +151,67 @@ export default function AdminProductsPage() {
             Kelola produk yang tersedia di toko Anda
           </p>
         </div>
-        <Button asChild>
-          <Link href="/admin/products/create">
-            <Plus className="mr-2 h-4 w-4" /> Tambah Produk
-          </Link>
-        </Button>
+        {isSuperAdmin && (
+          <Button asChild>
+            <Link href="/admin/products/create">
+              <Plus className="mr-2 h-4 w-4" /> Tambah Produk
+            </Link>
+          </Button>
+        )}
       </div>
+
+      {/* Filter Section (Super Admin only) */}
+      {user?.role === "SUPER_ADMIN" && (
+        <Card className="border-none shadow-sm bg-white/50 backdrop-blur-sm">
+          <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground whitespace-nowrap">
+                <StoreIcon className="h-4 w-4" /> PILIH TOKO:
+              </div>
+              <Select
+                value={selectedStoreId}
+                onValueChange={setSelectedStoreId}
+              >
+                <SelectTrigger className="max-w-xs bg-white">
+                  <SelectValue placeholder="Pilih Toko" />
+                </SelectTrigger>
+                <SelectContent>
+                  {stores.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Table card */}
       <Card>
         <CardHeader>
-          <CardTitle>Daftar Produk</CardTitle>
-          <CardDescription>
-            {isLoading
-              ? "Memuat…"
-              : `${products.length} produk ditemukan`}
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Daftar Produk</CardTitle>
+              <CardDescription>
+                {isLoading
+                  ? "Memuat…"
+                  : `${products.length} produk ditemukan`}
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
+          {!storeId ? (
+             <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+                <StoreIcon className="h-12 w-12 text-muted-foreground/20" />
+                <h3 className="text-lg font-medium text-muted-foreground">Pilih Toko Terlebih Dahulu</h3>
+                <p className="text-sm text-muted-foreground/60 max-w-xs">
+                  Silakan pilih toko dari menu di atas untuk mengelola daftar produk.
+                </p>
+             </div>
+          ) : isLoading ? (
             <div className="space-y-3">
               {Array.from({ length: 5 }).map((_, i) => (
                 <Skeleton key={i} className="h-14 w-full" />
@@ -147,11 +221,13 @@ export default function AdminProductsPage() {
             <div className="flex flex-col items-center justify-center gap-3 py-16 text-muted-foreground">
               <PackageSearch className="h-12 w-12 opacity-40" />
               <p className="text-sm font-medium">Belum ada produk</p>
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/admin/products/create">
-                  <Plus className="mr-1.5 h-4 w-4" /> Tambah Produk Pertama
-                </Link>
-              </Button>
+              {isSuperAdmin && (
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="/admin/products/create">
+                    <Plus className="mr-1.5 h-4 w-4" /> Tambah Produk Pertama
+                  </Link>
+                </Button>
+              )}
             </div>
           ) : (
             <div className="rounded-md border overflow-hidden">
@@ -163,7 +239,7 @@ export default function AdminProductsPage() {
                     <TableHead className="hidden md:table-cell">Kategori</TableHead>
                     <TableHead className="hidden sm:table-cell">Harga</TableHead>
                     <TableHead className="hidden lg:table-cell">Status</TableHead>
-                    <TableHead className="text-right">Aksi</TableHead>
+                    {isSuperAdmin && <TableHead className="text-right">Aksi</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -225,51 +301,53 @@ export default function AdminProductsPage() {
                         </TableCell>
 
                         {/* Actions */}
-                        <TableCell className="text-right space-x-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() =>
-                              router.push(`/admin/products/${product.id}/edit`)
-                            }
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
+                        {isSuperAdmin && (
+                          <TableCell className="text-right space-x-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() =>
+                                router.push(`/admin/products/${product.id}/edit`)
+                              }
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
 
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="text-destructive hover:text-destructive"
-                                disabled={isDeleting === product.id}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Hapus produk?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Tindakan ini akan menghapus{" "}
-                                  <span className="font-semibold">
-                                    &quot;{product.name}&quot;
-                                  </span>{" "}
-                                  secara permanen dan tidak dapat dibatalkan.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Batal</AlertDialogCancel>
-                                <AlertDialogAction
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                  onClick={() => handleDelete(product)}
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-destructive hover:text-destructive"
+                                  disabled={isDeleting === product.id}
                                 >
-                                  Hapus
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </TableCell>
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Hapus produk?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Tindakan ini akan menghapus{" "}
+                                    <span className="font-semibold">
+                                      &quot;{product.name}&quot;
+                                    </span>{" "}
+                                    secara permanen dan tidak dapat dibatalkan.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Batal</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    onClick={() => handleDelete(product)}
+                                  >
+                                    Hapus
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </TableCell>
+                        )}
                       </TableRow>
                     );
                   })}

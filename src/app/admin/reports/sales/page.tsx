@@ -16,6 +16,7 @@ import {
 import { toast } from "sonner";
 
 import { salesService, SalesTransaction, SalesSummary, MonthlyTrend } from "@/services/salesService";
+import { useAppStore } from "@/stores/useAppStore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -60,10 +61,18 @@ export default function SalesReportPage() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  const { user } = useAppStore();
+  const isSuperAdmin = user?.role === "SUPER_ADMIN";
+  const managedStoreId = user?.managedStore?.id;
+
   // Filter states from URL
   const month = searchParams.get("month") ? parseInt(searchParams.get("month")!) : undefined;
   const year = searchParams.get("year") ? parseInt(searchParams.get("year")!) : new Date().getFullYear();
-  const storeId = searchParams.get("storeId") || undefined;
+  
+  // Effectively force storeId if STORE_ADMIN
+  const rawStoreId = searchParams.get("storeId") || undefined;
+  const storeId = isSuperAdmin ? rawStoreId : managedStoreId;
+
   const page = parseInt(searchParams.get("page") || "1");
 
   // Data states
@@ -322,12 +331,13 @@ export default function SalesReportPage() {
                 onValueChange={(value) =>
                   updateFilters({ storeId: value === "all" ? null : value })
                 }
+                disabled={!isSuperAdmin}
               >
-                <SelectTrigger>
+                <SelectTrigger className={!isSuperAdmin ? "bg-slate-50 opacity-80" : ""}>
                   <SelectValue placeholder="Pilih toko" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Semua Toko</SelectItem>
+                  {isSuperAdmin && <SelectItem value="all">Semua Toko</SelectItem>}
                   {stores.map((store) => (
                     <SelectItem key={store.id} value={store.id}>
                       {store.name}
@@ -335,6 +345,11 @@ export default function SalesReportPage() {
                   ))}
                 </SelectContent>
               </Select>
+              {!isSuperAdmin && (
+                <p className="text-[10px] text-muted-foreground italic">
+                  *Terkunci pada toko yang Anda kelola
+                </p>
+              )}
             </div>
 
             {/* Reset Filters */}
