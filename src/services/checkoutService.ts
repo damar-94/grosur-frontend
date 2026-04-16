@@ -131,6 +131,12 @@ export async function uploadPaymentProof(
 
 /** Cancel an order (only if still PENDING) */
 export async function cancelOrder(orderId: string): Promise<Order> {
-  const res = await api.patch(`/orders/${orderId}/cancel`);
+  const res = await api.post(`/orders/${orderId}/cancel`);
+  return res.data.data;
+}
+
+/** Automatically cancel expired orders */
+export async function cancelExpiredOrders(): Promise<{ count: number }> {
+  const res = await api.post(`/orders/cancel-expired`);
   return res.data.data;
 }
