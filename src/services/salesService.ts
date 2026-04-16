@@ -57,6 +57,7 @@ export interface SalesReportResponse {
     byProduct: Array<{
       productId: string;
       productName: string;
+      productImage: string | null;
       quantity: number;
       revenue: number;
       orders: number;
