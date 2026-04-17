@@ -13,7 +13,7 @@ import {
   FiCreditCard,
   FiClock,
 } from "react-icons/fi";
-import { fetchOrder, cancelExpiredOrders, cancelOrder as cancelOrderService, type Order } from "@/services/checkoutService";
+import { fetchOrder, cancelExpiredOrders, autoConfirmShippedOrders, confirmOrderReceipt, cancelOrder as cancelOrderService, type Order } from "@/services/checkoutService";
 import { useAppStore } from "@/stores/useAppStore";
 
 export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -28,7 +28,10 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const loadOrder = useCallback(async () => {
     setIsLoading(true);
     try {
-      await cancelExpiredOrders().catch(() => {});
+      await Promise.all([
+        cancelExpiredOrders().catch(() => {}),
+        autoConfirmShippedOrders().catch(() => {})
+      ]);
       const data = await fetchOrder(orderId);
       setOrder(data);
     } catch (err) {
@@ -48,6 +51,20 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       loadOrder(); // Reload the specific order to show its new status
     } catch (err: any) {
       const msg = err.response?.data?.message || "Gagal membatalkan pesanan";
+      toast.error(msg);
+      setIsLoading(false);
+    }
+  };
+
+  const handleConfirmOrder = async () => {
+    if (!confirm("Konfirmasi penerimaan pesanan?")) return;
+    setIsLoading(true);
+    try {
+      await confirmOrderReceipt(orderId);
+      toast.success("Pesanan selesai! Terima kasih sudah berbelanja.");
+      loadOrder();
+    } catch (err: any) {
+      const msg = err.response?.data?.message || "Gagal konfirmasi pesanan";
       toast.error(msg);
       setIsLoading(false);
     }
@@ -243,6 +260,22 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                         className="w-full py-3 bg-red-50 hover:bg-red-100 text-red-600 text-sm font-bold rounded-xl transition-colors block text-center border border-red-100"
                       >
                         Batalkan Pesanan
+                      </button>
+                    </div>
+                )}
+
+                {order.status === "SENT" && (
+                    <div className="mt-6 flex flex-col gap-3">
+                      <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-xl mb-2">
+                        <p className="text-xs text-indigo-700 font-medium leading-relaxed">
+                          Pesananmu sudah dikirim. Silakan klik tombol di bawah jika barang sudah diterima.
+                        </p>
+                      </div>
+                      <button
+                        onClick={handleConfirmOrder}
+                        className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-all block text-center shadow-sm shadow-indigo-200"
+                      >
+                        Konfirmasi Pesanan Selesai
                       </button>
                     </div>
                 )}

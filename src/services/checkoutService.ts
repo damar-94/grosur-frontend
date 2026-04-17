@@ -142,3 +142,15 @@ export async function cancelExpiredOrders(): Promise<{ count: number }> {
   const res = await api.post(`/orders/cancel-expired`);
   return res.data.data;
 }
+
+/** Confirm receipt of an order */
+export async function confirmOrderReceipt(orderId: string): Promise<Order> {
+  const res = await api.post(`/orders/${orderId}/confirm`);
+  return res.data.data;
+}
+
+/** Automatically confirm shipped orders older than 48h */
+export async function autoConfirmShippedOrders(): Promise<{ count: number }> {
+  const res = await api.post(`/orders/auto-confirm`);
+  return res.data.data;
+}
