@@ -1,13 +1,39 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation"; // 💡 Added useRouter
+import { api } from "@/lib/axiosInstance"; // 💡 Added API instance
 import {
   FiSearch,
   FiShoppingCart,
   FiUser,
   FiHome,
   FiGrid,
+  FiLogIn,
+  FiLogOut
 } from "react-icons/fi";
+import { useAppStore } from "@/stores/useAppStore";
 
 export default function Navbar() {
+  // 💡 Swapped `logout` for `setUser` so we can manually clear it
+  const { user, setUser } = useAppStore();
+  const router = useRouter();
+
+  // 💡 THE FIX: Full-stack logout logic
+  const handleLogout = async () => {
+    try {
+      // 1. Destroy the httpOnly cookie on the backend
+      await api.post("/auth/logout");
+    } catch (error) {
+      console.error("Logout failed on server", error);
+    } finally {
+      // 2. Clear the frontend state
+      setUser(null);
+      // 3. Kick the user to the login page
+      router.push("/login");
+    }
+  };
+
   return (
     <>
       {/* 1. TOP HEADER (Sticky Search & Desktop Nav) */}
@@ -57,12 +83,34 @@ export default function Navbar() {
                 0
               </span>
             </Link>
-            <Link
-              href="/profile"
-              className="text-foreground hover:text-primary transition-colors"
-            >
-              <FiUser size={22} />
-            </Link>
+
+            {user ? (
+              <div className="flex items-center gap-4">
+                <Link
+                  href="/profile"
+                  className="flex items-center gap-2 text-foreground hover:text-primary transition-colors"
+                >
+                  <FiUser size={22} />
+                  <span className="text-sm font-medium">{user.name}</span>
+                </Link>
+                {/* 💡 Replaced onClick with handleLogout */}
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-1 text-red-500 hover:text-red-700 transition-colors"
+                >
+                  <FiLogOut size={18} />
+                  <span className="text-sm font-medium">Keluar</span>
+                </button>
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="flex items-center gap-2 text-foreground hover:text-primary transition-colors"
+              >
+                <FiLogIn size={22} />
+                <span className="text-sm font-medium">Masuk / Daftar</span>
+              </Link>
+            )}
           </div>
         </div>
       </header>
@@ -100,11 +148,11 @@ export default function Navbar() {
           </Link>
 
           <Link
-            href="/profile"
+            href={user ? "/profile" : "/login"}
             className="flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-primary transition-colors"
           >
-            <FiUser size={20} />
-            <span className="text-[10px] font-medium">Profil</span>
+            {user ? <FiUser size={20} /> : <FiLogIn size={20} />}
+            <span className="text-[10px] font-medium">{user ? "Profil" : "Masuk"}</span>
           </Link>
         </div>
       </nav>

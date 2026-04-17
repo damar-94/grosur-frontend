@@ -7,6 +7,9 @@ interface User {
   email: string;
   role: string;
   name?: string;
+  phone?: string;
+  profilePicture?: string;
+  referralCode?: string;
   managedStore?: {
     id: string;
     name: string;

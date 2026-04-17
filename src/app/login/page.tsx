@@ -94,7 +94,7 @@ function LoginForm() {
         <div>
           <div className="flex justify-between items-center">
             <label className="block text-sm font-medium text-gray-700">Password</label>
-            <Link href="/forgot-password" className="text-xs text-[#00997a] hover:underline">Lupa password?</Link>
+
           </div>
           <input
             type="password"
