@@ -75,4 +75,21 @@ export const adminService = {
     const response = await api.get("/admin/store-admins/list/all");
     return response.data;
   },
+
+  // Order Management
+  getAdminOrders: async (params: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    storeId?: string;
+    search?: string;
+    date?: string;
+  }) => {
+    const query = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value) query.append(key, String(value));
+    });
+    const response = await api.get(`/admin/orders?${query.toString()}`);
+    return response.data;
+  },
 };
