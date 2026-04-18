@@ -20,10 +20,11 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
               setCartCount(cartRes.data.data.count);
             }
           } catch (e) {
-             console.error("Failed to fetch cart count", e);
+            console.error("Failed to fetch cart count", e);
+          }
+
           const user = data.data.user;
-          setUser(user);
-          
+
           // For STORE_ADMIN, automatically set their managed store as the active store
           if (user.role === "STORE_ADMIN" && user.managedStore) {
             useAppStore.getState().setNearestStore(user.managedStore);

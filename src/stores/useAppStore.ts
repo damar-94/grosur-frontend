@@ -65,18 +65,6 @@ interface AppState {
   clearCart: () => void;
 }
 
-export const useAppStore = create<AppState>((set) => ({
-  user: null,
-  isAuthenticated: false,
-  isLoading: true,
-  nearestStore: null,
-  cartCount: 0,
-  setUser: (user) => set({ user, isAuthenticated: !!user, isLoading: false }),
-  setLoading: (loading) => set({ isLoading: loading }),
-  setNearestStore: (store) => set({ nearestStore: store }),
-  setCartCount: (count) => set({ cartCount: count }),
-  logout: () => set({ user: null, isAuthenticated: false, nearestStore: null, cartCount: 0 }),
-}));
 export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
@@ -86,17 +74,20 @@ export const useAppStore = create<AppState>()(
       isLoading: true,
       nearestStore: null,
       currentStore: null,
+      cartCount: 0,
       cart: [],
 
       // Auth actions
       setUser: (user) =>
         set({ user, isAuthenticated: !!user, isLoading: false }),
       setLoading: (loading) => set({ isLoading: loading }),
+      setCartCount: (count) => set({ cartCount: count }),
       logout: () =>
         set({
           user: null,
           isAuthenticated: false,
           nearestStore: null,
+          cartCount: 0,
           cart: [],
         }),
 
@@ -145,6 +136,7 @@ export const useAppStore = create<AppState>()(
         isAuthenticated: state.isAuthenticated,
         nearestStore: state.nearestStore,
         currentStore: state.currentStore,
+        cartCount: state.cartCount,
         cart: state.cart,
       }),
       // After rehydration, mark loading as false
