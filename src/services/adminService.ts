@@ -102,4 +102,9 @@ export const adminService = {
     const response = await api.patch(`/admin/orders/${orderId}/payment`, { action });
     return response.data;
   },
+
+  sendOrder: async (orderId: string) => {
+    const response = await api.patch(`/admin/orders/${orderId}/send`);
+    return response.data;
+  },
 };

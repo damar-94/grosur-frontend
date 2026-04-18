@@ -43,7 +43,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
 
    const [confirmDialog, setConfirmDialog] = useState<{
       isOpen: boolean;
-      action: "accept" | "reject" | null;
+      action: "accept" | "reject" | "ship" | null;
       title: string;
       description: string;
    }>({
@@ -80,6 +80,15 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
       });
    };
 
+   const handleShipOrder = () => {
+      setConfirmDialog({
+         isOpen: true,
+         action: "ship",
+         title: "Kirim Pesanan",
+         description: "Pastikan semua barang sudah siap dan tiba di gudang sebelum melakukan pengiriman. Apakah Anda yakin ingin mengirim pesanan ini?",
+      });
+   };
+
    const executeAction = async () => {
       const { action } = confirmDialog;
       if (!action) return;
@@ -88,11 +97,16 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
       setConfirmDialog(prev => ({ ...prev, isOpen: false }));
       
       try {
-         await adminService.confirmPayment(orderId, action);
-         toast.success(action === "accept" ? "Pembayaran diterima" : "Pembayaran ditolak");
+         if (action === "ship") {
+            await adminService.sendOrder(orderId);
+            toast.success("Pesanan telah dikirim");
+         } else {
+            await adminService.confirmPayment(orderId, action);
+            toast.success(action === "accept" ? "Pembayaran diterima" : "Pembayaran ditolak");
+         }
          fetchOrder();
       } catch (err: any) {
-         toast.error(err.response?.data?.message || "Gagal memperbarui status pembayaran");
+         toast.error(err.response?.data?.message || "Gagal memperbarui status pesanan");
       } finally {
          setIsUpdating(false);
       }
@@ -226,13 +240,30 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
                </div>
 
                {/* Payment Proof Section */}
-               {(order.paymentProof || order.status === "WAITING_CONFIRMATION") && (
+               {(order.paymentProof || order.status === "WAITING_CONFIRMATION" || order.status === "PROCESSED") && (
                   <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                      <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2 text-sm">
-                        <FiImage className="text-[#00997a]" /> Bukti Pembayaran
+                        {order.status === "PROCESSED" ? <FiTruck className="text-[#00997a]" /> : <FiImage className="text-[#00997a]" />} 
+                        {order.status === "PROCESSED" ? "Pengiriman" : "Bukti Pembayaran"}
                      </h3>
-
-                     {order.paymentProof ? (
+ 
+                     {order.status === "PROCESSED" ? (
+                        <div className="space-y-4">
+                           <div className="p-4 bg-cyan-50 border border-cyan-100 rounded-xl">
+                              <p className="text-xs text-cyan-700 font-medium leading-relaxed">
+                                 Pesanan ini sudah dibayar dan siap dikirim. Pastikan stok fisik barang sudah tersedia di gudang sebelum menekan tombol kirim.
+                              </p>
+                           </div>
+                           <button
+                              onClick={handleShipOrder}
+                              disabled={isUpdating}
+                              className="w-full md:w-auto px-8 py-3 bg-[#00997a] text-white rounded-xl text-xs font-extrabold uppercase tracking-wider hover:bg-[#008066] hover:shadow-lg hover:shadow-[#00997a]/20 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                           >
+                              {isUpdating ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <FiTruck size={16} />}
+                              Kirim Pesanan Sekarang
+                           </button>
+                        </div>
+                     ) : order.paymentProof ? (
                         <div className="space-y-4">
                            <div className="relative aspect-video w-full max-w-sm overflow-hidden rounded-xl border border-gray-100 bg-gray-50 shadow-inner group">
                               <img
@@ -245,7 +276,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
                                  <span className="opacity-0 group-hover:opacity-100 bg-white/90 px-3 py-1 rounded-full text-[10px] font-bold text-gray-600 shadow-sm transition-opacity">Klik untuk perbesar</span>
                               </div>
                            </div>
-
+ 
                            {order.status === "WAITING_CONFIRMATION" && (
                               <div className="pt-2 flex flex-wrap gap-3">
                                  <button
@@ -295,12 +326,12 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
                   <AlertDialogAction
                      onClick={executeAction}
                      className={`rounded-xl font-extrabold uppercase tracking-wider transition-all shadow-lg ${
-                        confirmDialog.action === "accept" 
+                        confirmDialog.action === "accept" || confirmDialog.action === "ship"
                            ? "bg-[#00997a] hover:bg-[#008066] shadow-[#00997a]/20" 
                            : "bg-rose-500 hover:bg-rose-600 shadow-rose-500/20"
                      }`}
                   >
-                     {confirmDialog.action === "accept" ? "Ya, Terima" : "Ya, Tolak"}
+                     {confirmDialog.action === "accept" ? "Ya, Terima" : confirmDialog.action === "ship" ? "Ya, Kirim" : "Ya, Tolak"}
                   </AlertDialogAction>
                </AlertDialogFooter>
             </AlertDialogContent>
