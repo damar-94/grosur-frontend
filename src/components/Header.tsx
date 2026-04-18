@@ -7,7 +7,7 @@ import { api } from "@/lib/axiosInstance";
 import { ShoppingCart } from "lucide-react";
 
 export default function Header() {
-  const { user, logout, cart } = useAppStore();
+  const { user, logout, cartCount } = useAppStore();
   const router = useRouter();
 
   const cartItemCount = cart.reduce((acc, item) => acc + item.quantity, 0);
@@ -26,7 +26,7 @@ export default function Header() {
   };
 
   return (
-    <header className="flex items-center justify-between p-4 bg-white shadow-sm border-b">
+    <header className="flex items-center justify-between p-4 bg-white shadow-sm border-b sticky top-0 z-50">
       <Link href="/" className="text-xl font-bold text-[#00997a]">
         Grosur
       </Link>
@@ -54,7 +54,7 @@ export default function Header() {
               )}
             </Link>
 
-            <Link href="/profile" className="text-sm font-medium">
+            <Link href="/profile" className="text-sm font-medium hover:text-[#00997a]">
               {user.email}
             </Link>
 
@@ -72,7 +72,7 @@ export default function Header() {
             </Link>
             <Link
               href="/register"
-              className="px-4 py-2 text-sm font-bold text-white bg-[#00997a] rounded-md"
+              className="px-4 py-2 text-sm font-bold text-white bg-[#00997a] rounded-md hover:bg-[#008066]"
             >
               Daftar
             </Link>

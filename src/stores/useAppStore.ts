@@ -7,6 +7,7 @@ interface User {
   email: string;
   role: string;
   name?: string;
+  isVerified?: boolean;
   managedStore?: {
     id: string;
     name: string;
@@ -41,6 +42,7 @@ interface AppState {
 
   // Store location
   nearestStore: Store | null;
+  cartCount: number;
   currentStore: Store | null;
 
   // Cart
@@ -49,6 +51,7 @@ interface AppState {
   // Actions – Auth
   setUser: (user: User | null) => void;
   setLoading: (loading: boolean) => void;
+  setCartCount: (count: number) => void;
   logout: () => void;
 
   // Actions – Store
@@ -62,6 +65,18 @@ interface AppState {
   clearCart: () => void;
 }
 
+export const useAppStore = create<AppState>((set) => ({
+  user: null,
+  isAuthenticated: false,
+  isLoading: true,
+  nearestStore: null,
+  cartCount: 0,
+  setUser: (user) => set({ user, isAuthenticated: !!user, isLoading: false }),
+  setLoading: (loading) => set({ isLoading: loading }),
+  setNearestStore: (store) => set({ nearestStore: store }),
+  setCartCount: (count) => set({ cartCount: count }),
+  logout: () => set({ user: null, isAuthenticated: false, nearestStore: null, cartCount: 0 }),
+}));
 export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
