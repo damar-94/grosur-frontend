@@ -16,6 +16,17 @@ import {
    FiXCircle,
    FiImage,
 } from "react-icons/fi";
+import {
+   AlertDialog,
+   AlertDialogAction,
+   AlertDialogCancel,
+   AlertDialogContent,
+   AlertDialogDescription,
+   AlertDialogFooter,
+   AlertDialogHeader,
+   AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import { api } from "@/lib/axiosInstance";
 import { adminService } from "@/services/adminService";
 import { useAppStore } from "@/stores/useAppStore";
@@ -30,6 +41,18 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
    const [isLoading, setIsLoading] = useState(true);
    const [isUpdating, setIsUpdating] = useState(false);
 
+   const [confirmDialog, setConfirmDialog] = useState<{
+      isOpen: boolean;
+      action: "accept" | "reject" | null;
+      title: string;
+      description: string;
+   }>({
+      isOpen: false,
+      action: null,
+      title: "",
+      description: "",
+   });
+
    const fetchOrder = useCallback(async () => {
       setIsLoading(true);
       try {
@@ -43,14 +66,27 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
       }
    }, [orderId, router]);
 
-   const handleConfirmPayment = async (action: "accept" | "reject") => {
-      const confirmMessage = action === "accept"
+   const handleConfirmPayment = (action: "accept" | "reject") => {
+      const title = action === "accept" ? "Konfirmasi Pembayaran" : "Tolak Pembayaran";
+      const description = action === "accept"
          ? "Apakah Anda yakin ingin MENERIMA pembayaran ini? Status pesanan akan berubah menjadi DIPROSES."
          : "Apakah Anda yakin ingin MENOLAK pembayaran ini? Status pesanan akan kembali ke MENUNGGU PEMBAYARAN.";
 
-      if (!window.confirm(confirmMessage)) return;
+      setConfirmDialog({
+         isOpen: true,
+         action,
+         title,
+         description,
+      });
+   };
+
+   const executeAction = async () => {
+      const { action } = confirmDialog;
+      if (!action) return;
 
       setIsUpdating(true);
+      setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+      
       try {
          await adminService.confirmPayment(orderId, action);
          toast.success(action === "accept" ? "Pembayaran diterima" : "Pembayaran ditolak");
@@ -241,6 +277,34 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
                )}
             </div>
          )}
+
+         <AlertDialog open={confirmDialog.isOpen} onOpenChange={(open) => setConfirmDialog(prev => ({ ...prev, isOpen: open }))}>
+            <AlertDialogContent className="rounded-2xl border-none shadow-2xl">
+               <AlertDialogHeader>
+                  <AlertDialogTitle className="text-xl font-extrabold text-gray-800">
+                     {confirmDialog.title}
+                  </AlertDialogTitle>
+                  <AlertDialogDescription className="text-sm text-gray-500 font-medium leading-relaxed">
+                     {confirmDialog.description}
+                  </AlertDialogDescription>
+               </AlertDialogHeader>
+               <AlertDialogFooter className="mt-4 gap-2">
+                  <AlertDialogCancel className="rounded-xl border-gray-100 font-bold text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-all">
+                     Batal
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                     onClick={executeAction}
+                     className={`rounded-xl font-extrabold uppercase tracking-wider transition-all shadow-lg ${
+                        confirmDialog.action === "accept" 
+                           ? "bg-[#00997a] hover:bg-[#008066] shadow-[#00997a]/20" 
+                           : "bg-rose-500 hover:bg-rose-600 shadow-rose-500/20"
+                     }`}
+                  >
+                     {confirmDialog.action === "accept" ? "Ya, Terima" : "Ya, Tolak"}
+                  </AlertDialogAction>
+               </AlertDialogFooter>
+            </AlertDialogContent>
+         </AlertDialog>
       </div>
    );
 }

@@ -13,6 +13,16 @@ import {
   FiCreditCard,
   FiClock,
 } from "react-icons/fi";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { fetchOrder, cancelExpiredOrders, autoConfirmShippedOrders, confirmOrderReceipt, cancelOrder as cancelOrderService, type Order } from "@/services/checkoutService";
 import { useAppStore } from "@/stores/useAppStore";
 
@@ -24,6 +34,23 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    type: "cancel" | "confirm" | null;
+    title: string;
+    description: string;
+    confirmText: string;
+    variant: "danger" | "primary" | "info";
+  }>({
+    isOpen: false,
+    type: null,
+    title: "",
+    description: "",
+    confirmText: "",
+    variant: "primary",
+  });
 
   const loadOrder = useCallback(async () => {
     setIsLoading(true);
@@ -42,31 +69,49 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     }
   }, [orderId, router]);
 
-  const handleCancelOrder = async () => {
-    if (!confirm("Apakah Anda yakin ingin membatalkan pesanan ini?")) return;
-    setIsLoading(true);
-    try {
-      await cancelOrderService(orderId);
-      toast.success("Pesanan berhasil dibatalkan");
-      loadOrder(); // Reload the specific order to show its new status
-    } catch (err: any) {
-      const msg = err.response?.data?.message || "Gagal membatalkan pesanan";
-      toast.error(msg);
-      setIsLoading(false);
-    }
+  const handleCancelOrder = () => {
+    setConfirmDialog({
+      isOpen: true,
+      type: "cancel",
+      title: "Batalkan Pesanan",
+      description: "Apakah Anda yakin ingin membatalkan pesanan ini? Tindakan ini tidak dapat dibatalkan.",
+      confirmText: "Ya, Batalkan",
+      variant: "danger",
+    });
   };
 
-  const handleConfirmOrder = async () => {
-    if (!confirm("Konfirmasi penerimaan pesanan?")) return;
-    setIsLoading(true);
+  const handleConfirmOrder = () => {
+    setConfirmDialog({
+      isOpen: true,
+      type: "confirm",
+      title: "Konfirmasi Penerimaan",
+      description: "Apakah Anda yakin pesanan sudah sampai dan ingin menyelesaikannya?",
+      confirmText: "Ya, Selesaikan",
+      variant: "info",
+    });
+  };
+
+  const executeAction = async () => {
+    const { type } = confirmDialog;
+    if (!type) return;
+
+    setIsUpdating(true);
+    setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+
     try {
-      await confirmOrderReceipt(orderId);
-      toast.success("Pesanan selesai! Terima kasih sudah berbelanja.");
+      if (type === "cancel") {
+        await cancelOrderService(orderId);
+        toast.success("Pesanan berhasil dibatalkan");
+      } else {
+        await confirmOrderReceipt(orderId);
+        toast.success("Pesanan selesai! Terima kasih sudah berbelanja.");
+      }
       loadOrder();
     } catch (err: any) {
-      const msg = err.response?.data?.message || "Gagal konfirmasi pesanan";
+      const msg = err.response?.data?.message || `Gagal ${type === "cancel" ? "membatalkan" : "konfirmasi"} pesanan`;
       toast.error(msg);
-      setIsLoading(false);
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -257,7 +302,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                       </Link>
                       <button
                         onClick={handleCancelOrder}
-                        className="w-full py-3 bg-red-50 hover:bg-red-100 text-red-600 text-sm font-bold rounded-xl transition-colors block text-center border border-red-100"
+                        disabled={isUpdating}
+                        className="w-full py-3 bg-red-50 hover:bg-red-100 text-red-600 text-sm font-bold rounded-xl transition-colors block text-center border border-red-100 disabled:opacity-50"
                       >
                         Batalkan Pesanan
                       </button>
@@ -273,7 +319,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                       </div>
                       <button
                         onClick={handleConfirmOrder}
-                        className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-all block text-center shadow-sm shadow-indigo-200"
+                        disabled={isUpdating}
+                        className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-all block text-center shadow-sm shadow-indigo-200 disabled:opacity-50"
                       >
                         Konfirmasi Pesanan Selesai
                       </button>
@@ -284,6 +331,36 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           </div>
         </div>
       )}
+
+      <AlertDialog open={confirmDialog.isOpen} onOpenChange={(open) => setConfirmDialog(prev => ({ ...prev, isOpen: open }))}>
+        <AlertDialogContent className="rounded-2xl border-none shadow-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl font-extrabold text-gray-800">
+              {confirmDialog.title}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm text-gray-500 font-medium leading-relaxed">
+              {confirmDialog.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-4 gap-2">
+            <AlertDialogCancel className="rounded-xl border-gray-100 font-bold text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-all">
+              {confirmDialog.type === "confirm" ? "Belum Sampai" : "Kembali"}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={executeAction}
+              className={`rounded-xl font-extrabold uppercase tracking-wider transition-all shadow-lg ${
+                confirmDialog.variant === "danger" 
+                  ? "bg-rose-500 hover:bg-rose-600 shadow-rose-500/20" 
+                  : confirmDialog.variant === "info" 
+                    ? "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-600/20"
+                    : "bg-[#00997a] hover:bg-[#008066] shadow-[#00997a]/20"
+              }`}
+            >
+              {confirmDialog.confirmText}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

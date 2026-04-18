@@ -15,6 +15,16 @@ import {
   FiLoader,
   FiArrowLeft,
 } from "react-icons/fi";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { fetchOrders, cancelExpiredOrders, autoConfirmShippedOrders, confirmOrderReceipt, type Order } from "@/services/checkoutService";
 import { useAppStore } from "@/stores/useAppStore";
 
@@ -29,6 +39,15 @@ export default function OrdersPage() {
   const [statusFilter, setStatusFilter] = useState<OrderStatus>("ALL");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const [completeOrderDialog, setCompleteOrderDialog] = useState<{
+    isOpen: boolean;
+    orderId: string | null;
+  }>({
+    isOpen: false,
+    orderId: null,
+  });
 
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -319,19 +338,15 @@ export default function OrdersPage() {
                          <span className="text-xs font-medium">Pesananmu sudah dalam perjalanan. Sudah sampai?</span>
                       </div>
                       <button
-                         onClick={async (e) => {
+                         onClick={(e) => {
                             e.preventDefault();
-                            if (confirm("Konfirmasi penerimaan pesanan?")) {
-                               try {
-                                  await confirmOrderReceipt(order.id);
-                                  toast.success("Pesanan selesai! Terima kasih sudah berbelanja.");
-                                  loadOrders();
-                               } catch (err: any) {
-                                  toast.error(err.response?.data?.message || "Gagal konfirmasi pesanan");
-                               }
-                            }
+                            setCompleteOrderDialog({
+                               isOpen: true,
+                               orderId: order.id,
+                            });
                          }}
-                         className="w-full sm:w-auto px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-colors shadow-sm"
+                         disabled={isUpdating}
+                         className="w-full sm:w-auto px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-colors shadow-sm disabled:opacity-50"
                       >
                          Selesaikan Pesanan
                       </button>
@@ -377,6 +392,45 @@ export default function OrdersPage() {
            ))}
         </div>
       )}
+
+      <AlertDialog 
+         open={completeOrderDialog.isOpen} 
+         onOpenChange={(open) => setCompleteOrderDialog(prev => ({ ...prev, isOpen: open }))}
+      >
+         <AlertDialogContent className="rounded-2xl border-none shadow-2xl">
+            <AlertDialogHeader>
+               <AlertDialogTitle className="text-xl font-extrabold text-gray-800">
+                  Konfirmasi Penerimaan
+               </AlertDialogTitle>
+               <AlertDialogDescription className="text-sm text-gray-500 font-medium leading-relaxed">
+                  Apakah Anda yakin pesanan sudah sampai dan ingin menyelesaikannya? Tindakan ini tidak dapat dibatalkan.
+               </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="mt-4 gap-2">
+               <AlertDialogCancel className="rounded-xl border-gray-100 font-bold text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-all">
+                  Belum Sampai
+               </AlertDialogCancel>
+               <AlertDialogAction
+                  onClick={async () => {
+                     if (!completeOrderDialog.orderId) return;
+                     setIsUpdating(true);
+                     try {
+                        await confirmOrderReceipt(completeOrderDialog.orderId);
+                        toast.success("Pesanan selesai! Terima kasih sudah berbelanja.");
+                        loadOrders();
+                     } catch (err: any) {
+                        toast.error(err.response?.data?.message || "Gagal konfirmasi pesanan");
+                     } finally {
+                        setIsUpdating(false);
+                     }
+                  }}
+                  className="rounded-xl bg-[#00997a] hover:bg-[#008066] font-extrabold uppercase tracking-wider transition-all shadow-lg shadow-[#00997a]/20"
+               >
+                  Ya, Selesaikan
+               </AlertDialogAction>
+            </AlertDialogFooter>
+         </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
