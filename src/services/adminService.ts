@@ -92,4 +92,14 @@ export const adminService = {
     const response = await api.get(`/admin/orders?${query.toString()}`);
     return response.data;
   },
+
+  getOrderDetail: async (orderId: string) => {
+    const response = await api.get(`/admin/orders/${orderId}`);
+    return response.data;
+  },
+
+  confirmPayment: async (orderId: string, action: "accept" | "reject") => {
+    const response = await api.patch(`/admin/orders/${orderId}/payment`, { action });
+    return response.data;
+  },
 };
