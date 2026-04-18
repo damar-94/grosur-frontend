@@ -353,8 +353,8 @@ export default function OrdersPage() {
                    </div>
                 )}
 
-                {/* Footer Action for Pending manual payments */}
-                {order.status === "WAITING_PAYMENT" && order.paymentStatus === "PENDING" && order.paymentMethod === "MANUAL_TRANSFER" && (
+                {/* Footer Action for Pending/Rejected manual payments */}
+                {order.status === "WAITING_PAYMENT" && order.paymentStatus !== "PAID" && order.paymentMethod === "MANUAL_TRANSFER" && (
                   <div className="bg-amber-50 px-6 py-3 flex items-center justify-between">
                     <div className="flex items-center gap-2 text-amber-700">
                       <FiAlertCircle size={14} />

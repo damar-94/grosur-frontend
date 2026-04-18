@@ -12,6 +12,7 @@ import {
   FiTruck,
   FiCreditCard,
   FiClock,
+  FiAlertCircle,
 } from "react-icons/fi";
 import {
   AlertDialog,
@@ -292,8 +293,16 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                   </div>
                 </div>
 
-                {order.status === "WAITING_PAYMENT" && order.paymentStatus === "PENDING" && order.paymentMethod === "MANUAL_TRANSFER" && (
+                {order.status === "WAITING_PAYMENT" && order.paymentMethod === "MANUAL_TRANSFER" && order.paymentStatus !== "PAID" && (
                     <div className="mt-6 flex flex-col gap-3">
+                      {order.paymentStatus === "REJECTED" && (
+                        <div className="bg-rose-50 border border-rose-100 p-4 rounded-xl mb-2 flex items-center gap-3">
+                          <FiAlertCircle className="text-rose-500 shrink-0" size={18} />
+                          <p className="text-xs text-rose-700 font-medium leading-relaxed">
+                            Pembayaran sebelumnya ditolak oleh admin. Silakan periksa kembali dan upload bukti pembayaran yang valid.
+                          </p>
+                        </div>
+                      )}
                       <Link
                         href={`/checkout/${order.id}/payment`}
                         className="w-full py-3 bg-[#00997a] hover:bg-[#007a61] text-white text-sm font-bold rounded-xl transition-colors block text-center shadow-sm shadow-[#00997a]/20"
