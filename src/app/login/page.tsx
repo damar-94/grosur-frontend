@@ -64,6 +64,8 @@ function LoginForm() {
     }
   };
 
+  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
   return (
     <div className="w-full p-8 space-y-6 bg-white rounded-xl shadow-sm border border-gray-100">
       <h1 className="text-2xl font-bold text-center text-gray-900">Masuk ke Grosur</h1>
@@ -120,7 +122,7 @@ function LoginForm() {
         </button>
       </form>
 
-      {/* --- DIVIDER --- */}
+      {/* --- GOOGLE LOGIN --- */}
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
           <div className="w-full border-t border-gray-200"></div>
@@ -130,13 +132,27 @@ function LoginForm() {
         </div>
       </div>
 
-      {/* --- GOOGLE BUTTON --- */}
       <div className="flex justify-center">
-        <GoogleLogin
-          onSuccess={handleGoogleSuccess}
-          onError={() => setServerError("Gagal terhubung dengan Google")}
-          useOneTap
-        />
+        {googleClientId ? (
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => setServerError("Gagal terhubung dengan Google")}
+            useOneTap
+          />
+        ) : (
+          <button
+            type="button"
+            className="flex items-center justify-center w-fit px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 transition-all"
+            onClick={() => setServerError("GSI Client ID belum dikonfigurasi. Silakan hubungi pengembang.")}
+          >
+            <img 
+              src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" 
+              alt="Google Logo" 
+              className="w-5 h-5 mr-3"
+            />
+            <span className="text-sm font-medium text-gray-700">Masuk dengan Google</span>
+          </button>
+        )}
       </div>
 
       <p className="text-sm text-center text-[#8e8e8e]">
@@ -149,18 +165,28 @@ function LoginForm() {
 import AuthHeader from "@/components/auth/AuthHeader";
 
 export default function LoginPage() {
-  return (
-    <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}>
-      <div className="min-h-screen bg-gray-50 flex flex-col">
-        <AuthHeader title="Log In" />
-        <main className="flex-grow flex items-center justify-center p-4">
-          <div className="w-full max-w-md">
-            <Suspense fallback={<div className="text-center text-gray-500">Memuat...</div>}>
-              <LoginForm />
-            </Suspense>
-          </div>
-        </main>
-      </div>
-    </GoogleOAuthProvider>
+  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+  const content = (
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <AuthHeader title="Log In" />
+      <main className="flex-grow flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <Suspense fallback={<div className="text-center text-gray-500">Memuat...</div>}>
+            <LoginForm />
+          </Suspense>
+        </div>
+      </main>
+    </div>
   );
+
+  if (googleClientId) {
+    return (
+      <GoogleOAuthProvider clientId={googleClientId}>
+        {content}
+      </GoogleOAuthProvider>
+    );
+  }
+
+  return content;
 }

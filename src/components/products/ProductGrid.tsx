@@ -29,7 +29,13 @@ export function ProductGrid({ storeId, limit = 8 }: ProductGridProps) {
         page: 1,
         limit,
       });
-      setProducts(response.items);
+
+      // Data is nested under the 'data' property in ProductListResponse
+      if (response.success && response.data) {
+        setProducts(response.data.items);
+      } else {
+        setProducts([]);
+      }
     } catch (error: any) {
       console.error("Failed to fetch products for grid", error);
       toast.error("Gagal memuat produk.");
@@ -83,7 +89,7 @@ export function ProductGrid({ storeId, limit = 8 }: ProductGridProps) {
     );
   }
 
-  if (products.length === 0) {
+  if (!products || products.length === 0) {
     return (
       <div className="text-center py-12 bg-muted/10 rounded-xl border border-dashed">
         <p className="text-sm text-muted-foreground">Tidak ada produk tersedia di toko ini.</p>

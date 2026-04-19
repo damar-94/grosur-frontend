@@ -17,12 +17,29 @@ import { productFormSchema, type ProductFormValues } from "@/schemas/product.sch
 import { productService, type Category } from "@/services/productService";
 import { ProductFormFields } from "@/components/admin/products/ProductFormFields";
 import { ImageDropzone } from "@/components/admin/products/ImageDropzone";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAppStore } from "@/stores/useAppStore";
 
 export default function CreateProductPage() {
   const router = useRouter();
-  const { nearestStore } = useAppStore();
-  const storeId = nearestStore?.id ?? "";
+  const { user, currentStore, setCurrentStore } = useAppStore();
+  
+  const isSuperAdmin = user?.role === "SUPER_ADMIN";
+  const [stores, setStores] = useState<{ id: string; name: string }[]>([]);
+  const [storesLoading, setStoresLoading] = useState(false);
+  const [selectedStoreId, setSelectedStoreId] = useState<string>(
+    user?.role === "STORE_ADMIN" 
+      ? (user?.managedStore?.id ?? "") 
+      : (currentStore?.id ?? "")
+  );
+
+  const storeId = selectedStoreId;
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
@@ -42,19 +59,41 @@ export default function CreateProductPage() {
     },
   });
 
-  // Load categories on mount
+  // Load categories and stores on mount
   useEffect(() => {
     (async () => {
       try {
-        const res = await productService.getCategories();
-        setCategories(res.data);
+        const catRes = await productService.getCategories();
+        setCategories(catRes.data);
+        
+        if (isSuperAdmin) {
+          setStoresLoading(true);
+          const storeRes = await productService.getStores();
+          if (storeRes.success) {
+            setStores(storeRes.data);
+            // If no store selected from global state, pick the first one
+            if (!selectedStoreId && storeRes.data.length > 0) {
+              setSelectedStoreId(storeRes.data[0].id);
+              setCurrentStore(storeRes.data[0]);
+            }
+          }
+        }
       } catch {
-        toast.error("Gagal memuat kategori");
+        toast.error("Gagal memuat data pendukung");
       } finally {
         setCategoriesLoading(false);
+        setStoresLoading(false);
       }
     })();
-  }, []);
+  }, [isSuperAdmin, selectedStoreId, setCurrentStore]);
+
+  const handleStoreChange = (val: string) => {
+    setSelectedStoreId(val);
+    const store = stores.find(s => s.id === val);
+    if (store) {
+      setCurrentStore(store);
+    }
+  };
 
   const onSubmit = async (values: ProductFormValues) => {
     if (!storeId) {
@@ -123,9 +162,29 @@ export default function CreateProductPage() {
         </Button>
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Tambah Produk</h1>
-          <p className="text-sm text-muted-foreground">
-            Toko: <span className="font-semibold text-foreground">{nearestStore?.name || "Toko belum dipilih"}</span>
-          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-sm text-muted-foreground">Toko:</span>
+            {isSuperAdmin ? (
+              <Select
+                value={selectedStoreId}
+                onValueChange={handleStoreChange}
+                disabled={storesLoading}
+              >
+                <SelectTrigger className="h-7 w-[200px] text-xs font-semibold">
+                  <SelectValue placeholder="Pilih Toko" />
+                </SelectTrigger>
+                <SelectContent>
+                  {stores.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <span className="text-sm font-semibold text-foreground">
+                {user?.managedStore?.name || "Toko Regional"}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 

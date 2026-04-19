@@ -94,7 +94,9 @@ export function StockTransferModal({
       form.setValue("productId", "");
       productService.getProducts({ storeId: fromStoreId, limit: 100 })
         .then(res => {
-          if (res.success) setProducts(res.items || []);
+          if (res.success && res.data) {
+            setProducts(res.data.items || []);
+          }
         })
         .catch(() => toast.error("Gagal memuat produk toko asal"))
         .finally(() => setIsFetchingProducts(false));

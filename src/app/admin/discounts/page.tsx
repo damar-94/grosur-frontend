@@ -31,13 +31,13 @@ import {
 import { DiscountFormModal } from "@/components/admin/discounts/DiscountFormModal";
 
 export default function DiscountManagementPage() {
-  const { user } = useAppStore();
+  const { user, currentStore, setCurrentStore } = useAppStore();
   const isSuperAdmin = user?.role === "SUPER_ADMIN";
   const storeAdminId = user?.managedStore?.id;
 
   const [stores, setStores] = React.useState<{ id: string; name: string }[]>([]);
   const [selectedStoreId, setSelectedStoreId] = React.useState<string | undefined>(
-    isSuperAdmin ? undefined : storeAdminId
+    isSuperAdmin ? (currentStore?.id || undefined) : storeAdminId
   );
 
   const [discounts, setDiscounts] = React.useState<Discount[]>([]);
@@ -52,11 +52,20 @@ export default function DiscountManagementPage() {
           setStores(res.data);
           if (res.data.length > 0 && !selectedStoreId) {
             setSelectedStoreId(res.data[0].id);
+            setCurrentStore(res.data[0]);
           }
         }
       }).catch(() => toast.error("Gagal memuat daftar toko"));
     }
-  }, [isSuperAdmin, selectedStoreId]);
+  }, [isSuperAdmin, selectedStoreId, setCurrentStore]);
+
+  const handleStoreChange = (storeId: string) => {
+    setSelectedStoreId(storeId);
+    const store = stores.find((s) => s.id === storeId);
+    if (store) {
+      setCurrentStore(store);
+    }
+  };
 
   // 2. Fetch Discounts
   const fetchDiscounts = React.useCallback(async () => {
@@ -123,7 +132,7 @@ export default function DiscountManagementPage() {
 
         <div className="flex items-center gap-3">
           {isSuperAdmin ? (
-            <Select value={selectedStoreId} onValueChange={(val) => setSelectedStoreId(val)}>
+            <Select value={selectedStoreId} onValueChange={handleStoreChange}>
               <SelectTrigger className="w-[300px] border-primary/50 shadow-sm">
                 <SelectValue placeholder="Pilih cabang penyelenggara..." />
               </SelectTrigger>
