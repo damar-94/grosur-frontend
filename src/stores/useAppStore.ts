@@ -8,6 +8,9 @@ interface User {
   role: string;
   name?: string;
   isVerified?: boolean;
+  phone?: string;
+  profilePicture?: string;
+  referralCode?: string;
   managedStore?: {
     id: string;
     name: string;

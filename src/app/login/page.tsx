@@ -1,4 +1,3 @@
-// src/app/login/page.tsx
 "use client";
 
 import { useState, Suspense } from "react";
@@ -9,6 +8,7 @@ import { loginSchema, LoginFormValues } from "@/schemas/auth.schema";
 import { api } from "@/lib/axiosInstance";
 import { useAppStore } from "@/stores/useAppStore";
 import Link from "next/link";
+import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 
 function LoginForm() {
   const router = useRouter();
@@ -22,6 +22,7 @@ function LoginForm() {
     resolver: zodResolver(loginSchema),
   });
 
+  // Standard Email/Password Login
   const onSubmit = async (data: LoginFormValues) => {
     try {
       setServerError("");
@@ -39,6 +40,27 @@ function LoginForm() {
       }
     } catch (error: any) {
       setServerError(error.response?.data?.message || "Login gagal");
+    }
+  };
+
+  // Google Social Login Flow
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    try {
+      setServerError("");
+      // Send the Google token to our backend API we wrote earlier
+      const res = await api.post("/auth/google", {
+        credential: credentialResponse.credential,
+      });
+
+      // Based on our auth.controller.ts, user data is inside res.data.data.user
+      const userData = res.data.data.user;
+      setUser(userData);
+
+      if (userData.role === "SUPER_ADMIN") router.push("/admin/dashboard");
+      else if (userData.role === "STORE_ADMIN") router.push("/store-admin/dashboard");
+      else router.push("/");
+    } catch (error: any) {
+      setServerError(error.response?.data?.message || "Google Login gagal");
     }
   };
 
@@ -72,7 +94,7 @@ function LoginForm() {
         <div>
           <div className="flex justify-between items-center">
             <label className="block text-sm font-medium text-gray-700">Password</label>
-            <Link href="/forgot-password" className="text-xs text-[#00997a] hover:underline">Lupa password?</Link>
+
           </div>
           <input
             type="password"
@@ -81,6 +103,12 @@ function LoginForm() {
             placeholder="••••••••"
           />
           {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
+        </div>
+
+        <div className="flex justify-end">
+          <Link href="/forgot-password" className="text-xs font-medium text-[#00997a] hover:underline">
+            Lupa Password?
+          </Link>
         </div>
 
         <button
@@ -92,30 +120,47 @@ function LoginForm() {
         </button>
       </form>
 
+      {/* --- DIVIDER --- */}
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-gray-200"></span>
+          <div className="w-full border-t border-gray-200"></div>
         </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-white px-2 text-gray-500">Atau</span>
+        <div className="relative flex justify-center text-sm">
+          <span className="bg-white px-2 text-[#8e8e8e]">Atau masuk dengan</span>
         </div>
       </div>
 
-      <p className="text-sm text-center text-gray-500">
+      {/* --- GOOGLE BUTTON --- */}
+      <div className="flex justify-center">
+        <GoogleLogin
+          onSuccess={handleGoogleSuccess}
+          onError={() => setServerError("Gagal terhubung dengan Google")}
+          useOneTap
+        />
+      </div>
+
+      <p className="text-sm text-center text-[#8e8e8e]">
         Belum punya akun? <Link href="/register" className="text-[#00997a] font-bold hover:underline">Daftar di sini</Link>
       </p>
     </div>
   );
 }
 
+import AuthHeader from "@/components/auth/AuthHeader";
+
 export default function LoginPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center p-4 bg-gray-50">
-      <div className="w-full max-w-md">
-        <Suspense fallback={<div className="text-center text-gray-500">Memuat...</div>}>
-          <LoginForm />
-        </Suspense>
+    <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}>
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <AuthHeader title="Log In" />
+        <main className="flex-grow flex items-center justify-center p-4">
+          <div className="w-full max-w-md">
+            <Suspense fallback={<div className="text-center text-gray-500">Memuat...</div>}>
+              <LoginForm />
+            </Suspense>
+          </div>
+        </main>
       </div>
-    </main>
+    </GoogleOAuthProvider>
   );
 }

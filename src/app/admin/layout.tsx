@@ -12,13 +12,8 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const cookieStore = await cookies();
-  const role = cookieStore.get("role")?.value;
-
-  // Proteksi akses: hanya SUPER_ADMIN dan STORE_ADMIN yang bisa masuk
-  if (role !== "SUPER_ADMIN" && role !== "STORE_ADMIN") {
-    redirect("/");
-  }
+  // Authentication & Role Authorization is strictly handled by src/middleware.ts
+  // before the layout even loads. No need to double-check missing 'role' cookies here!
 
   return (
     <TooltipProvider delayDuration={0}>
