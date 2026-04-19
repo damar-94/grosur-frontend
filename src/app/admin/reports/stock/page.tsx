@@ -9,7 +9,11 @@ import {
   History,
   Store,
   Calendar,
-  Filter
+  Filter,
+  Printer,
+  Download,
+  TrendingUp,
+  Package
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
@@ -117,14 +121,105 @@ export default function StockReportPage() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
+      {/* Print-only Report Header */}
+      <div className="hidden print:block mb-6 border-b pb-4">
+        <h1 className="text-2xl font-bold">Laporan Mutasi Stok - Grosur</h1>
+        <div className="flex justify-between mt-2 text-sm">
+          <div>
+            <p><span className="font-semibold">Periode:</span> {months[month - 1]} {year}</p>
+            <p><span className="font-semibold">Toko:</span> {storeId === "all" ? "Semua Toko" : stores.find(s => s.id === storeId)?.name || user?.managedStore?.name || "Toko Utama"}</p>
+          </div>
+          <div className="text-right">
+            <p><span className="font-semibold">Tanggal Cetak:</span> {new Date().toLocaleDateString("id-ID")}</p>
+          </div>
+        </div>
+      </div>
+
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Laporan Stok</h2>
           <p className="text-muted-foreground"> Ringkasan mutasi stok produk per bulan.</p>
         </div>
+        <div className="flex items-center gap-3">
+          <Button 
+            variant="outline" 
+            onClick={() => window.print()}
+            className="bg-white hover:bg-slate-50 border-slate-200 shadow-sm transition-all hover:shadow-md active:scale-95"
+          >
+            <Printer className="h-4 w-4 mr-2 text-indigo-600" />
+            Cetak Laporan
+          </Button>
+        </div>
       </div>
 
       {/* Filter Section */}
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="border-none shadow-sm bg-emerald-50/50">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-emerald-600 uppercase tracking-wider">Total Masuk</p>
+                <h3 className="text-2xl font-bold text-emerald-700 mt-1">
+                  {isLoading ? <Skeleton className="h-8 w-16" /> : reports.reduce((s, r) => s + r.totalIn, 0)}
+                </h3>
+              </div>
+              <div className="bg-emerald-100 p-2 rounded-lg">
+                <ArrowUpCircle className="h-6 w-6 text-emerald-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-none shadow-sm bg-rose-50/50">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-rose-600 uppercase tracking-wider">Total Keluar</p>
+                <h3 className="text-2xl font-bold text-rose-700 mt-1">
+                  {isLoading ? <Skeleton className="h-8 w-16" /> : reports.reduce((s, r) => s + r.totalOut, 0)}
+                </h3>
+              </div>
+              <div className="bg-rose-100 p-2 rounded-lg">
+                <ArrowDownCircle className="h-6 w-6 text-rose-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-none shadow-sm bg-blue-50/50">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-blue-600 uppercase tracking-wider">Net Mutasi</p>
+                <h3 className="text-2xl font-bold text-blue-700 mt-1">
+                  {isLoading ? <Skeleton className="h-8 w-16" /> : reports.reduce((s, r) => s + (r.totalIn - r.totalOut), 0)}
+                </h3>
+              </div>
+              <div className="bg-blue-100 p-2 rounded-lg">
+                <TrendingUp className="h-6 w-6 text-blue-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-none shadow-sm bg-slate-50/50">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-600 uppercase tracking-wider">Produk Aktif</p>
+                <h3 className="text-2xl font-bold text-slate-700 mt-1">
+                  {isLoading ? <Skeleton className="h-8 w-16" /> : reports.filter(r => r.totalIn > 0 || r.totalOut > 0).length}
+                </h3>
+              </div>
+              <div className="bg-slate-200 p-2 rounded-lg">
+                <Package className="h-6 w-6 text-slate-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <Card className="border-none shadow-sm bg-white/50 backdrop-blur-sm">
         <CardContent className="p-6">
           <div className="flex flex-wrap gap-4 items-end">
@@ -211,15 +306,17 @@ export default function StockReportPage() {
       <Card className="border-none shadow-xl">
         <CardContent className="p-0">
           <Table>
-            <TableHeader className="bg-muted/50">
+            <TableHeader className="bg-muted/50 border-b">
               <TableRow>
-                <TableHead className="w-12 text-center">No</TableHead>
-                <TableHead>Produk</TableHead>
-                {user?.role === "SUPER_ADMIN" && <TableHead>Toko</TableHead>}
-                <TableHead className="text-center font-bold text-green-600">Total Masuk</TableHead>
-                <TableHead className="text-center font-bold text-red-600">Total Keluar</TableHead>
-                <TableHead className="text-center font-bold bg-muted/30">Stok Akhir</TableHead>
-                <TableHead className="text-right">Aksi</TableHead>
+                <TableHead className="w-12 text-center print:hidden">No</TableHead>
+                <TableHead className="font-bold whitespace-nowrap">Bulan</TableHead>
+                <TableHead className="font-bold min-w-[200px]">Produk</TableHead>
+                {user?.role === "SUPER_ADMIN" && <TableHead className="font-bold whitespace-nowrap">Toko</TableHead>}
+                <TableHead className="text-center font-bold whitespace-nowrap">Stok Awal</TableHead>
+                <TableHead className="text-center font-bold text-emerald-600 whitespace-nowrap">Total Masuk (+)</TableHead>
+                <TableHead className="text-center font-bold text-rose-600 whitespace-nowrap">Total Keluar (-)</TableHead>
+                <TableHead className="text-center font-bold bg-muted/30 whitespace-nowrap">Stok Akhir</TableHead>
+                <TableHead className="text-right print:hidden">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -227,7 +324,7 @@ export default function StockReportPage() {
                 <TableSkeleton roles={user?.role} />
               ) : filteredReports.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={user?.role === "SUPER_ADMIN" ? 7 : 6} className="h-60 text-center">
+                  <TableCell colSpan={user?.role === "SUPER_ADMIN" ? 9 : 8} className="h-60 text-center">
                     <div className="flex flex-col items-center justify-center space-y-3">
                       <FileText className="h-12 w-12 text-muted-foreground/30" />
                       <p className="text-muted-foreground font-medium">Tidak ada data mutasi stok pada periode ini.</p>
@@ -236,33 +333,50 @@ export default function StockReportPage() {
                 </TableRow>
               ) : (
                 filteredReports.map((report, index) => (
-                  <TableRow key={`${report.productId}-${report.storeName}`} className="hover:bg-muted/30 transition-colors">
-                    <TableCell className="text-center text-muted-foreground">{index + 1}</TableCell>
-                    <TableCell className="font-semibold">{report.productName}</TableCell>
+                  <TableRow key={`${report.productId}-${report.storeName}`} className="hover:bg-muted/30 transition-colors border-b last:border-0 group">
+                    <TableCell className="text-center text-muted-foreground print:hidden">{index + 1}</TableCell>
+                    <TableCell className="font-medium">
+                      {months[month - 1]} {year}
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-semibold text-slate-900">{report.productName}</div>
+                      <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{report.unit}</div>
+                    </TableCell>
                     {user?.role === "SUPER_ADMIN" && <TableCell className="text-sm text-muted-foreground">{report.storeName}</TableCell>}
+                    <TableCell className="text-center font-medium text-slate-600">
+                      {report.initialStock}
+                    </TableCell>
                     <TableCell className="text-center">
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-green-700 bg-green-50 border border-green-100 font-medium">
-                        <ArrowUpCircle className="h-3.5 w-3.5" />
+                      <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-semibold shadow-sm border ${
+                        report.totalIn > 0 
+                          ? "text-emerald-700 bg-emerald-50 border-emerald-100" 
+                          : "text-slate-300 bg-slate-50/50 border-slate-100"
+                      }`}>
+                        <ArrowUpCircle className={`h-3.5 w-3.5 ${report.totalIn > 0 ? "text-emerald-600" : "text-slate-300"}`} />
                         {report.totalIn}
                       </div>
                     </TableCell>
                     <TableCell className="text-center">
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-red-700 bg-red-50 border border-red-100 font-medium">
-                        <ArrowDownCircle className="h-3.5 w-3.5" />
+                      <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-semibold shadow-sm border ${
+                        report.totalOut > 0 
+                          ? "text-rose-700 bg-rose-50 border-rose-100" 
+                          : "text-slate-300 bg-slate-50/50 border-slate-100"
+                      }`}>
+                        <ArrowDownCircle className={`h-3.5 w-3.5 ${report.totalOut > 0 ? "text-rose-600" : "text-slate-300"}`} />
                         {report.totalOut}
                       </div>
                     </TableCell>
-                    <TableCell className="text-center font-mono font-bold text-lg bg-muted/10">
+                    <TableCell className="text-center font-mono font-bold text-lg bg-slate-50/50">
                       {report.endStock}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right print:hidden">
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                        className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 font-medium"
                         onClick={() => handleViewDetail(report.productId, report.productName)}
                       >
-                        <History className="h-4 w-4 mr-2" /> Detail Riwayat
+                        <History className="h-4 w-4 mr-2" /> Detail
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -280,7 +394,7 @@ export default function StockReportPage() {
           onOpenChange={setIsModalOpen}
           productId={selectedProduct.id}
           productName={selectedProduct.name}
-          storeId={storeId || user?.managedStoreId || ""}
+          storeId={storeId || user?.managedStore?.id || ""}
           month={month}
           year={year}
         />
@@ -294,15 +408,57 @@ function TableSkeleton({ roles }: { roles?: string }) {
     <>
       {[1, 2, 3, 4, 5].map((i) => (
         <TableRow key={i}>
-          <TableCell><Skeleton className="h-4 w-4 mx-auto" /></TableCell>
+          <TableCell className="print:hidden"><Skeleton className="h-4 w-4 mx-auto" /></TableCell>
+          <TableCell><Skeleton className="h-4 w-24" /></TableCell>
           <TableCell><Skeleton className="h-4 w-40" /></TableCell>
           {roles === "SUPER_ADMIN" && <TableCell><Skeleton className="h-4 w-24" /></TableCell>}
+          <TableCell><Skeleton className="h-4 w-12 mx-auto" /></TableCell>
           <TableCell><Skeleton className="h-8 w-20 mx-auto rounded-full" /></TableCell>
           <TableCell><Skeleton className="h-8 w-20 mx-auto rounded-full" /></TableCell>
           <TableCell><Skeleton className="h-6 w-12 mx-auto" /></TableCell>
-          <TableCell className="text-right"><Skeleton className="h-9 w-32 ml-auto" /></TableCell>
+          <TableCell className="text-right print:hidden"><Skeleton className="h-9 w-32 ml-auto" /></TableCell>
         </TableRow>
       ))}
+      <style jsx global>{`
+        @media print {
+          body {
+            background: white !important;
+          }
+          .print\\:hidden, 
+          button, 
+          aside, 
+          nav, 
+          header,
+          .fixed,
+          [role="dialog"] {
+            display: none !important;
+          }
+          .main-content, 
+          .container, 
+          .space-y-6 {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+          }
+          .card, .shadow-xl, .shadow-sm {
+            box-shadow: none !important;
+            border: 1px solid #eee !important;
+          }
+          table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+          }
+          th {
+            background-color: #f8fafc !important;
+            -webkit-print-color-adjust: exact;
+          }
+          .text-emerald-700 { color: #065f46 !important; }
+          .bg-emerald-50 { background-color: #ecfdf5 !important; -webkit-print-color-adjust: exact; }
+          .text-rose-700 { color: #9f1239 !important; }
+          .bg-rose-50 { background-color: #fff1f2 !important; -webkit-print-color-adjust: exact; }
+        }
+      `}</style>
     </>
   );
 }

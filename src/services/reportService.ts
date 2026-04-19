@@ -4,6 +4,7 @@ export interface StockSummaryReport {
   productId: string;
   productName: string;
   storeName: string;
+  initialStock: number;
   totalIn: number;
   totalOut: number;
   endStock: number;
