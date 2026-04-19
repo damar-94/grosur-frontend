@@ -13,7 +13,10 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         setLoading(true);
         const { data } = await api.get("/auth/me");
         if (data.success && data.data.user) {
-          setUser(data.data.user);
+          const user = data.data.user;
+          setUser(user);
+
+          // Get cart count
           try {
             const cartRes = await api.get("/cart/count");
             if (cartRes.data?.success) {

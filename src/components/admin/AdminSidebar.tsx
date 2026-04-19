@@ -41,7 +41,7 @@ const adminMenuItems = [
 
 const analyticsMenuItems = [
   { title: "Sales Report", url: "/admin/reports/sales", icon: TrendingUp, roles: ["SUPER_ADMIN", "STORE_ADMIN"] },
-  // { title: "Stock Report", url: "/admin/reports/stock", icon: Box, roles: ["SUPER_ADMIN", "STORE_ADMIN"] },
+  { title: "Stock Report", url: "/admin/reports/stock", icon: Box, roles: ["SUPER_ADMIN", "STORE_ADMIN"] },
 ];
 
 export function AdminSidebar() {
