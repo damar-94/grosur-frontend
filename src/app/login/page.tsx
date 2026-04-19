@@ -146,16 +146,21 @@ function LoginForm() {
   );
 }
 
+import AuthHeader from "@/components/auth/AuthHeader";
+
 export default function LoginPage() {
   return (
     <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}>
-      <main className="flex min-h-screen items-center justify-center p-4 bg-gray-50">
-        <div className="w-full max-w-md">
-          <Suspense fallback={<div className="text-center text-gray-500">Memuat...</div>}>
-            <LoginForm />
-          </Suspense>
-        </div>
-      </main>
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <AuthHeader title="Log In" />
+        <main className="flex-grow flex items-center justify-center p-4">
+          <div className="w-full max-w-md">
+            <Suspense fallback={<div className="text-center text-gray-500">Memuat...</div>}>
+              <LoginForm />
+            </Suspense>
+          </div>
+        </main>
+      </div>
     </GoogleOAuthProvider>
   );
 }

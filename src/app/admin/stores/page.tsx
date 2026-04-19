@@ -92,11 +92,14 @@ export default function StoreManagementPage() {
         setSelectedStoreId(storeId);
         setShowAssignModal(true);
         try {
-            // Assuming you have an endpoint to list users. Adjust if needed!
-            const res = await api.get("/users");
+            // Retrieve users through the correct super admin endpoint
+            const res = await api.get("/admin/users");
             // Filter out super admins or existing store admins if necessary
+            // The result structure is already res.data.data from our sendResponse util
             setUsers(res.data.data.filter((u: any) => u.role === "USER"));
-        } catch (e) { console.error("Gagal mengambil data user"); }
+        } catch (e) {
+            console.error("Gagal mengambil data user", e);
+        }
     };
 
     const handleAssignAdmin = async (userId: string) => {
