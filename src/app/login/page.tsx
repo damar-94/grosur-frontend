@@ -137,7 +137,6 @@ function LoginForm() {
           <GoogleLogin
             onSuccess={handleGoogleSuccess}
             onError={() => setServerError("Gagal terhubung dengan Google")}
-            useOneTap
           />
         ) : (
           <button

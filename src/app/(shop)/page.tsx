@@ -26,8 +26,9 @@ export default function HomePage() {
           longitude: coordinates?.lng || null,
         });
 
-        if (response.data.store) {
-          setCurrentStore({ id: response.data.store.id, name: response.data.store.name });
+        const store = response.data.data || response.data.store;
+        if (store) {
+          setCurrentStore({ id: store.id, name: store.name });
           setStoreMessage(response.data.message);
         }
       } catch (error) {
