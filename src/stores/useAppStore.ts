@@ -8,6 +8,9 @@ interface User {
   role: string;
   name?: string;
   isVerified?: boolean;
+  phone?: string;
+  profilePicture?: string;
+  referralCode?: string;
   managedStore?: {
     id: string;
     name: string;
@@ -136,6 +139,7 @@ export const useAppStore = create<AppState>()(
         isAuthenticated: state.isAuthenticated,
         nearestStore: state.nearestStore,
         currentStore: state.currentStore,
+        cartCount: state.cartCount,
         cart: state.cart,
       }),
       // After rehydration, mark loading as false

@@ -88,7 +88,7 @@ export default function AddressForm({ onSuccess }: { onSuccess?: () => void }) {
             };
 
             // Call your address controller (which will also hit OpenCage to get Lat/Lng!)
-            await api.post("/address", payload);
+            await api.post("/addresses", payload);
 
             if (onSuccess) onSuccess();
 
