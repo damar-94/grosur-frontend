@@ -107,4 +107,8 @@ export const adminService = {
     const response = await api.patch(`/admin/orders/${orderId}/send`);
     return response.data;
   },
+  cancelOrder: async (orderId: string, cancelReason?: string) => {
+    const response = await api.patch(`/admin/orders/${orderId}/cancel`, { cancelReason });
+    return response.data;
+  },
 };
