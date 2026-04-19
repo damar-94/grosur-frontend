@@ -4,7 +4,8 @@ import { useAppStore } from "@/stores/useAppStore";
 import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 // 💡 Swapped Menu/X for ChevronDown to make an accordion-style toggle
-import { User, Receipt, Bell, Ticket, Edit2, ChevronDown } from "lucide-react";
+import { User, Receipt, Bell, Ticket, Edit2, ChevronDown, LayoutDashboard } from "lucide-react";
+import Link from "next/link";
 import ReferralCard from "@/components/profile/ReferralCard";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -132,7 +133,10 @@ export default function ProfilePage() {
                                 </div>
                                 <div>
                                     <p className="font-bold text-gray-800 text-sm truncate w-32">{user.name}</p>
-                                    <div className="text-gray-500 flex items-center gap-1 text-xs mt-0.5 md:hover:text-[#00997a]">
+                                    <p className="text-[10px] font-bold text-[#00997a] bg-[#00997a]/10 px-2 py-0.5 rounded w-fit mt-1">
+                                        {user.role === "USER" ? "Customer" : user.role === "STORE_ADMIN" ? "Store Admin" : "Super Admin"}
+                                    </p>
+                                    <div className="text-gray-500 flex items-center gap-1 text-xs mt-1.5 md:hover:text-[#00997a]">
                                         <Edit2 size={10} /> Ubah Profil
                                     </div>
                                 </div>
@@ -188,6 +192,22 @@ export default function ProfilePage() {
                             <div className="flex items-center gap-2 text-gray-700 hover:text-[#00997a] font-medium cursor-pointer transition-colors">
                                 <Ticket size={20} className="text-red-500" /> Voucher Saya
                             </div>
+
+                            {/* 💡 Admin Shortcuts */}
+                            {user.role === "SUPER_ADMIN" && (
+                                <div className="pt-4 mt-4 border-t border-gray-100">
+                                    <Link href="/admin/stores" className="flex items-center gap-2 text-[#00997a] hover:text-[#007a61] font-bold cursor-pointer transition-colors">
+                                        <LayoutDashboard size={20} /> Store Management
+                                    </Link>
+                                </div>
+                            )}
+                            {user.role === "STORE_ADMIN" && (
+                                <div className="pt-4 mt-4 border-t border-gray-100">
+                                    <Link href="/admin" className="flex items-center gap-2 text-[#00997a] hover:text-[#007a61] font-bold cursor-pointer transition-colors">
+                                        <LayoutDashboard size={20} /> Admin Dashboard
+                                    </Link>
+                                </div>
+                            )}
                         </nav>
                     </aside>
 

@@ -93,6 +93,23 @@ export default function Navbar() {
                   <FiUser size={22} />
                   <span className="text-sm font-medium">{user.name}</span>
                 </Link>
+
+                <span className="text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary px-2 py-1 rounded-md">
+                   {user.role === "USER" ? "Customer" : user.role === "STORE_ADMIN" ? "Store Admin" : "Super Admin"}
+                </span>
+
+                {/* 💡 Tombol Khusus Admin Panel */}
+                {user.role === "SUPER_ADMIN" && (
+                  <Link href="/admin/stores" className="flex items-center gap-1 text-xs font-bold text-white bg-[#00997a] hover:bg-[#007a61] px-3 py-1.5 rounded-md shadow-sm transition-colors">
+                    Store Management
+                  </Link>
+                )}
+                {user.role === "STORE_ADMIN" && (
+                  <Link href="/admin" className="flex items-center gap-1 text-xs font-bold text-white bg-[#00997a] hover:bg-[#007a61] px-3 py-1.5 rounded-md shadow-sm transition-colors">
+                    Admin Panel
+                  </Link>
+                )}
+
                 {/* 💡 Replaced onClick with handleLogout */}
                 <button
                   onClick={handleLogout}
