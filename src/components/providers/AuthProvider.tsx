@@ -21,12 +21,21 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
             }
           } catch (e) {
              console.error("Failed to fetch cart count", e);
+          const user = data.data.user;
+          setUser(user);
+          
+          // For STORE_ADMIN, automatically set their managed store as the active store
+          if (user.role === "STORE_ADMIN" && user.managedStore) {
+            useAppStore.getState().setNearestStore(user.managedStore);
           }
         } else {
           setUser(null);
         }
-      } catch (error) {
-        console.error("Auth sync failed", error);
+      } catch (error: any) {
+        // Only log error if it's not a standard 401 Unauthenticated
+        if (error?.response?.status !== 401) {
+          console.error("Auth sync failed", error);
+        }
         setUser(null);
       } finally {
         setLoading(false);

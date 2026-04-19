@@ -8,19 +8,21 @@ import { ShoppingBasket, Loader2 } from "lucide-react";
 import { productService, Product, Pagination } from "@/services/productService";
 import { ProductCard } from "@/components/products/ProductCard";
 import { ProductFilter } from "@/components/products/ProductFilter";
-import { 
-  Pagination as UIPagination, 
-  PaginationContent, 
-  PaginationItem, 
-  PaginationLink, 
-  PaginationNext, 
-  PaginationPrevious 
+import { useAppStore } from "@/stores/useAppStore";
+import {
+  Pagination as UIPagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
 } from "@/components/ui/pagination";
 
 function ProductCatalogContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { addToCart, setCurrentStore } = useAppStore();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [pagination, setPagination] = useState<Pagination | null>(null);
@@ -47,8 +49,8 @@ function ProductCatalogContent() {
       setProducts(response.items);
       setPagination(response.meta);
     } catch (error: unknown) {
-      if (error instanceof Error) {
-        const axiosError = error as any;
+      if (error && typeof error === "object" && "response" in error) {
+        const axiosError = error as { response?: { data?: { message?: string } } };
         toast.error(
           axiosError.response?.data?.message || 
           "Failed to load products. Please ensure a valid Store ID is provided."
@@ -113,8 +115,28 @@ function ProductCatalogContent() {
   };
 
   const handleAddToCart = (product: Product) => {
-    toast.success(`Added ${product.name} to cart! (Feature coming soon)`);
+    const price = typeof product.price === "string" ? parseFloat(product.price) : product.price;
+    addToCart({
+      productId: product.id,
+      quantity: 1,
+      product: { 
+        id: product.id, 
+        name: product.name, 
+        price, 
+        images: product.images?.map((img) => img.url) || (product.image ? [product.image] : undefined)
+      },
+    });
+    toast.success(`${product.name} ditambahkan ke keranjang!`, {
+      action: { label: "Lihat", onClick: () => router.push("/checkout") },
+    });
   };
+
+  // Sync nearest store to cart store
+  useEffect(() => {
+    if (storeId) {
+      setCurrentStore({ id: storeId, name: activeStoreName });
+    }
+  }, [storeId, activeStoreName, setCurrentStore]);
 
   return (
     <div className="container mx-auto px-4 py-8">
