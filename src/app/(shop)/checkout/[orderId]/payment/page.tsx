@@ -26,7 +26,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { fetchOrder, uploadPaymentProof, cancelOrder as cancelOrderService, type Order } from "@/services/checkoutService";
 import { useAppStore } from "@/stores/useAppStore";
@@ -62,6 +61,7 @@ export default function PaymentPage() {
   // ─── Countdown Timer State ──────────────────────────────────────────────────
   const [timeLeft, setTimeLeft] = useState<number>(PAYMENT_DEADLINE_MS);
   const [isExpired, setIsExpired] = useState(false);
+  const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -222,6 +222,7 @@ export default function PaymentPage() {
   // ─── Cancel Order ─────────────────────────────────────────────────────────────
   const handleCancelOrder = async () => {
     setIsLoading(true);
+    setIsCancelConfirmOpen(false);
     try {
       await cancelOrderService(orderId as string);
       toast.success("Pesanan berhasil dibatalkan");
@@ -343,7 +344,7 @@ export default function PaymentPage() {
       )}
 
       {/* ── Expired Banner ── */}
-      {isExpired && !uploadSuccess && !isPaid && !isWaitingConfirmation && (
+      {isExpired && !uploadSuccess && !isPaid && !isWaitingConfirmation && order.paymentStatus !== "REJECTED" && (
         <div className="mb-6 bg-red-50 border border-red-200 rounded-2xl p-6 flex flex-col items-center gap-3 text-center">
           <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center">
             <FiAlertCircle size={32} className="text-red-500" />
@@ -423,7 +424,7 @@ export default function PaymentPage() {
       </div>
 
       {/* ═══════ MANUAL TRANSFER SECTION ═══════ */}
-      {isManual && !uploadSuccess && !isPaid && !isWaitingConfirmation && !isExpired && (
+      {isManual && !uploadSuccess && !isPaid && !isWaitingConfirmation && (!isExpired || order.paymentStatus === "REJECTED") && (
         <div className="space-y-5">
           {/* Bank Accounts */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
@@ -576,39 +577,40 @@ export default function PaymentPage() {
                 </>
               )}
             </button>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <button
-                  disabled={isUploading || isExpired}
-                  className="mt-3 w-full py-3.5 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-xl transition-colors text-center border border-red-100 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  Batalkan Pesanan
-                </button>
-              </AlertDialogTrigger>
-              <AlertDialogContent className="rounded-2xl max-w-md">
-                <AlertDialogHeader className="sm:text-center flex flex-col items-center">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-50 mb-3">
-                    <FiAlertTriangle className="h-8 w-8 text-red-500" aria-hidden="true" />
-                  </div>
-                  <AlertDialogTitle className="text-xl font-bold text-[#1a1a1a]">Batalkan Pesanan</AlertDialogTitle>
-                  <AlertDialogDescription className="text-center text-sm text-gray-500 mt-2">
-                    Apakah Anda yakin ingin membatalkan pesanan ini? Tindakan ini tidak dapat diurungkan dan pesanan akan hangus.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter className="w-full mt-6 grid grid-cols-2 gap-3 sm:flex-none">
-                  <AlertDialogCancel className="w-full h-12 rounded-xl border-gray-200 text-gray-600 font-bold m-0 sm:m-0">Batal</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleCancelOrder}
-                    className="w-full h-12 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold m-0 sm:m-0"
-                  >
-                    Ya, Batalkan
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <button
+              onClick={() => setIsCancelConfirmOpen(true)}
+              disabled={isUploading || isExpired}
+              className="mt-3 w-full py-3.5 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-xl transition-colors text-center border border-red-100 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Batalkan Pesanan
+            </button>
           </div>
         </div>
       )}
+
+      <AlertDialog open={isCancelConfirmOpen} onOpenChange={setIsCancelConfirmOpen}>
+        <AlertDialogContent className="rounded-2xl border-none shadow-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl font-extrabold text-gray-800">
+              Batalkan Pesanan
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm text-gray-500 font-medium leading-relaxed">
+              Apakah Anda yakin ingin membatalkan pesanan ini? Semua produk yang telah dipesan akan dikembalikan ke stok. Tindakan ini tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-4 gap-2">
+            <AlertDialogCancel className="rounded-xl border-gray-100 font-bold text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-all">
+              Kembali
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleCancelOrder}
+              className="rounded-xl bg-rose-500 hover:bg-rose-600 font-extrabold uppercase tracking-wider transition-all shadow-lg shadow-rose-500/20 text-white"
+            >
+              Ya, Batalkan
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
