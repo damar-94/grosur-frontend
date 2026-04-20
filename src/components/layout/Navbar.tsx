@@ -9,6 +9,7 @@ import {
   FiUser,
   FiHome,
   FiGrid,
+  FiPackage,
   FiLogIn,
   FiLogOut
 } from "react-icons/fi";
@@ -83,6 +84,19 @@ export default function Navbar() {
                   {cartCount > 99 ? "99+" : cartCount}
                 </span>
               )}
+            </Link>
+            <Link
+              href="/orders"
+              className="text-foreground hover:text-primary transition-colors"
+              title="Pesanan Saya"
+            >
+              <FiPackage size={22} />
+            </Link>
+            <Link
+              href="/profile"
+              className="text-foreground hover:text-primary transition-colors"
+            >
+              <FiUser size={22} />
             </Link>
 
             {user ? (

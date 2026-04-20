@@ -11,13 +11,13 @@ const addressSchema = z.object({
     name: z.string().min(1, "Nama penerima wajib diisi"),
     phone: z.string().min(9, "Nomor telepon tidak valid"),
     provinceId: z.string().min(1, "Pilih provinsi"),
-    province: z.string(), // We store the name too, for display purposes
+    province: z.string(), 
     cityId: z.string().min(1, "Pilih kota/kabupaten"),
     city: z.string(),
     district: z.string().min(1, "Kecamatan wajib diisi"),
     postalCode: z.string().optional(),
     detail: z.string().min(10, "Alamat lengkap minimal 10 karakter"),
-    isDefault: z.boolean().default(false),
+    isDefault: z.boolean(),
 });
 
 type AddressFormValues = z.infer<typeof addressSchema>;
@@ -30,8 +30,12 @@ export default function AddressForm({ onSuccess }: { onSuccess?: () => void }) {
     const [serverError, setServerError] = useState("");
 
     const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm<AddressFormValues>({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        resolver: zodResolver(addressSchema) as any,
+        resolver: zodResolver(addressSchema),
+        defaultValues: {
+            isDefault: false,
+            province: "",
+            city: "",
+        }
     });
 
     // Watch the provinceId to trigger the city fetch
@@ -40,16 +44,25 @@ export default function AddressForm({ onSuccess }: { onSuccess?: () => void }) {
     // 2. Fetch Provinces on Mount
     useEffect(() => {
         const fetchProvinces = async () => {
-            try {
-                const res = await api.get("/shipping/provinces");
-                setProvinces(res.data.data);
-            } catch (error) {
-                console.error("Failed to fetch provinces");
-            } finally {
-                setIsLoadingProvinces(false);
+            setIsLoadingProvinces(true);
+            const endpoints = ["/shipping/provinces"];
+            
+            for (const endpoint of endpoints) {
+                try {
+                    const res = await api.get(endpoint);
+                    const data = res.data?.data || res.data?.rajaongkir?.results || res.data;
+                    if (Array.isArray(data)) {
+                        setProvinces(data);
+                        return; // Found it!
+                    }
+                } catch (error) {
+                    continue; // Try next
+                }
             }
+            console.error("Failed to fetch provinces from all known endpoints");
+            setIsLoadingProvinces(false);
         };
-        fetchProvinces();
+        fetchProvinces().finally(() => setIsLoadingProvinces(false));
     }, []);
 
     // 3. Fetch Cities when Province changes
@@ -57,18 +70,27 @@ export default function AddressForm({ onSuccess }: { onSuccess?: () => void }) {
         if (selectedProvinceId) {
             const fetchCities = async () => {
                 setIsLoadingCities(true);
-                try {
-                    const res = await api.get(`/shipping/cities?provinceId=${selectedProvinceId}`);
-                    setCities(res.data.data);
-                } catch (error) {
-                    console.error("Failed to fetch cities");
-                } finally {
-                    setIsLoadingCities(false);
+                const endpoints = [
+                    `/shipping/cities?provinceId=${selectedProvinceId}`
+                ];
+
+                for (const endpoint of endpoints) {
+                    try {
+                        const res = await api.get(endpoint);
+                        const data = res.data?.data || res.data?.rajaongkir?.results || res.data;
+                        if (Array.isArray(data)) {
+                            setCities(data);
+                            return;
+                        }
+                    } catch (error) {
+                        continue;
+                    }
                 }
+                console.error("Failed to fetch cities from all known endpoints");
             };
-            fetchCities();
+            fetchCities().finally(() => setIsLoadingCities(false));
         } else {
-            setCities([]); // Reset cities if no province is selected
+            setCities([]);
         }
     }, [selectedProvinceId]);
 
