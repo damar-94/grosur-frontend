@@ -15,7 +15,19 @@ import {
   FiX,
   FiPackage,
   FiClock,
+  FiAlertTriangle,
 } from "react-icons/fi";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { fetchOrder, uploadPaymentProof, cancelOrder as cancelOrderService, type Order } from "@/services/checkoutService";
 import { useAppStore } from "@/stores/useAppStore";
 
@@ -209,7 +221,6 @@ export default function PaymentPage() {
 
   // ─── Cancel Order ─────────────────────────────────────────────────────────────
   const handleCancelOrder = async () => {
-    if (!confirm("Apakah Anda yakin ingin membatalkan pesanan ini?")) return;
     setIsLoading(true);
     try {
       await cancelOrderService(orderId as string);
@@ -565,13 +576,36 @@ export default function PaymentPage() {
                 </>
               )}
             </button>
-            <button
-              onClick={handleCancelOrder}
-              disabled={isUploading || isExpired}
-              className="mt-3 w-full py-3.5 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-xl transition-colors text-center border border-red-100 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              Batalkan Pesanan
-            </button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <button
+                  disabled={isUploading || isExpired}
+                  className="mt-3 w-full py-3.5 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-xl transition-colors text-center border border-red-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Batalkan Pesanan
+                </button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="rounded-2xl max-w-md">
+                <AlertDialogHeader className="sm:text-center flex flex-col items-center">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-50 mb-3">
+                    <FiAlertTriangle className="h-8 w-8 text-red-500" aria-hidden="true" />
+                  </div>
+                  <AlertDialogTitle className="text-xl font-bold text-[#1a1a1a]">Batalkan Pesanan</AlertDialogTitle>
+                  <AlertDialogDescription className="text-center text-sm text-gray-500 mt-2">
+                    Apakah Anda yakin ingin membatalkan pesanan ini? Tindakan ini tidak dapat diurungkan dan pesanan akan hangus.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter className="w-full mt-6 grid grid-cols-2 gap-3 sm:flex-none">
+                  <AlertDialogCancel className="w-full h-12 rounded-xl border-gray-200 text-gray-600 font-bold m-0 sm:m-0">Batal</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleCancelOrder}
+                    className="w-full h-12 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold m-0 sm:m-0"
+                  >
+                    Ya, Batalkan
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
       )}
