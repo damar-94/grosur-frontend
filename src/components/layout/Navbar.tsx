@@ -12,10 +12,12 @@ import {
   FiGrid,
   FiPackage,
   FiLogIn,
-  FiLogOut
+  FiLogOut,
+  FiMapPin
 } from "react-icons/fi";
-import { useSearchParams } from "next/navigation"; // 💡 Added useSearchParams
+import { useSearchParams } from "next/navigation"; 
 import { useAppStore } from "@/stores/useAppStore";
+import StoreSelector from "./StoreSelector";
 
 export default function Navbar() {
   const { user, setUser, cartCount } = useAppStore();
@@ -63,11 +65,17 @@ export default function Navbar() {
       <header className="sticky top-0 z-50 w-full border-b border-border bg-card shadow-sm">
         <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between px-4 md:px-6">
           {/* Desktop Logo */}
-          <Link href="/" className="hidden md:flex items-center gap-2">
-            <span className="text-2xl font-extrabold text-primary tracking-tight">
-              Grosur
-            </span>
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/" className="hidden md:flex items-center gap-2">
+              <span className="text-2xl font-extrabold text-primary tracking-tight">
+                Grosur
+              </span>
+            </Link>
+            
+            <div className="hidden md:block">
+               <StoreSelector />
+            </div>
+          </div>
 
           {/* Mobile Search Bar (Takes full width on mobile) */}
           <form onSubmit={handleSearch} className="flex w-full md:hidden relative items-center">
@@ -119,13 +127,6 @@ export default function Navbar() {
             >
               <FiPackage size={22} />
             </Link>
-            <Link
-              href="/profile"
-              className="text-foreground hover:text-primary transition-colors"
-            >
-              <FiUser size={22} />
-            </Link>
-
             {user ? (
               <div className="flex items-center gap-4">
                 <Link
