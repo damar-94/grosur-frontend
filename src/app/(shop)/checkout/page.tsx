@@ -201,11 +201,10 @@ export default function CheckoutPage() {
       <div className="flex items-center gap-2 mb-8">
         {["Alamat", "Pembayaran", "Konfirmasi"].map((step, i) => (
           <div key={step} className="flex items-center gap-2">
-            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-              i === 0
-                ? "bg-[#00997a] text-white"
-                : "bg-gray-100 text-gray-400"
-            }`}>
+            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${i === 0
+              ? "bg-[#00997a] text-white"
+              : "bg-gray-100 text-gray-400"
+              }`}>
               <span className="w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold
                 border border-current">
                 {i + 1}
@@ -281,11 +280,10 @@ export default function CheckoutPage() {
                         setSelectedAddress(addr);
                         setShowAddressList(false);
                       }}
-                      className={`w-full text-left p-3 rounded-xl border-2 transition-all ${
-                        selectedAddress?.id === addr.id
-                          ? "border-[#00997a] bg-[#00997a]/5"
-                          : "border-gray-100 bg-white hover:border-gray-300"
-                      }`}
+                      className={`w-full text-left p-3 rounded-xl border-2 transition-all ${selectedAddress?.id === addr.id
+                        ? "border-[#00997a] bg-[#00997a]/5"
+                        : "border-gray-100 bg-white hover:border-gray-300"
+                        }`}
                     >
                       <div className="flex items-start justify-between">
                         <div>
@@ -389,11 +387,10 @@ export default function CheckoutPage() {
               {/* Manual Transfer */}
               <label
                 htmlFor="pay-manual"
-                className={`flex items-start gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                  paymentMethod === "MANUAL_TRANSFER"
-                    ? "border-[#00997a] bg-[#00997a]/5"
-                    : "border-gray-100 hover:border-gray-300"
-                }`}
+                className={`flex items-start gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === "MANUAL_TRANSFER"
+                  ? "border-[#00997a] bg-[#00997a]/5"
+                  : "border-gray-100 hover:border-gray-300"
+                  }`}
               >
                 <input
                   id="pay-manual"
@@ -419,11 +416,10 @@ export default function CheckoutPage() {
               {/* Payment Gateway */}
               <label
                 htmlFor="pay-gateway"
-                className={`flex items-start gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                  paymentMethod === "PAYMENT_GATEWAY"
-                    ? "border-[#00997a] bg-[#00997a]/5"
-                    : "border-gray-100 hover:border-gray-300"
-                }`}
+                className={`flex items-start gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${paymentMethod === "PAYMENT_GATEWAY"
+                  ? "border-[#00997a] bg-[#00997a]/5"
+                  : "border-gray-100 hover:border-gray-300"
+                  }`}
               >
                 <input
                   id="pay-gateway"
@@ -491,7 +487,7 @@ export default function CheckoutPage() {
               </div>
               <div className="flex justify-between text-gray-600">
                 <span>Biaya Pengiriman</span>
-                <span className="font-medium text-gray-400 italic text-xs">Dihitung backend</span>
+                <span className="font-medium text-gray-400 italic text-xs">Dihitung Admin</span>
               </div>
               <div className="flex justify-between text-gray-600">
                 <span>Gudang Terdekat</span>
