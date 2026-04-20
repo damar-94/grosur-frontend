@@ -56,8 +56,15 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
           )}
           {discountLabel && !isOutOfStock && (
             <div className="absolute top-2 left-2 z-10">
-              <Badge className="bg-red-500 hover:bg-red-600 text-white border-none font-bold px-2 py-0.5 rounded-sm">
+              <Badge className="bg-red-500 hover:bg-red-600 text-white border-none font-bold px-2 py-0.5 rounded-sm text-[10px]">
                 {discountLabel} OFF
+              </Badge>
+            </div>
+          )}
+          {!isOutOfStock && (
+            <div className="absolute bottom-2 left-2 z-10">
+              <Badge variant="secondary" className="bg-stone-900/75 backdrop-blur-sm border-none text-white text-[10px] font-bold px-2 py-0.5 rounded-sm shadow-md">
+                Stok: {product.inventory.quantity}
               </Badge>
             </div>
           )}
@@ -70,14 +77,14 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
           )}
         </CardHeader>
         
-        <CardContent className="p-4 flex-1 flex flex-col gap-1.5 border-t">
-          <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+        <CardContent className="p-3 flex-1 flex flex-col gap-0.5 border-t">
+          <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-80">
             {product.category}
           </div>
-          <h3 className="font-semibold text-lg line-clamp-2 leading-tight min-h-10 group-hover:text-primary transition-colors">
+          <h3 className="font-bold text-sm line-clamp-2 leading-snug min-h-10 group-hover:text-primary transition-colors">
             {product.name}
           </h3>
-          <p className="text-sm text-muted-foreground line-clamp-2 mt-auto">
+          <p className="text-[11px] text-muted-foreground line-clamp-2 mt-auto leading-relaxed">
             {product.description || "No description available"}
           </p>
         </CardContent>
@@ -87,14 +94,14 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
         <div className="flex flex-col w-full">
           {product.discount && product.discount.type !== "B1G1" && (
              <div className="text-xs text-muted-foreground line-through">
-               Rp {price.toLocaleString("id-ID")}
+                Rp {price.toLocaleString("id-ID")}
              </div>
           )}
           <div className="flex items-center justify-between w-full">
-            <div className="text-xl font-extrabold text-[#00997a]">
+            <div className="text-base font-black text-[#00997a]">
               Rp {discountedPrice.toLocaleString("id-ID")}
             </div>
-            <div className="text-[10px] sm:text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+            <div className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded font-bold">
               Stok: {product.inventory.quantity}
             </div>
           </div>
