@@ -309,7 +309,7 @@ export default function OrdersPage() {
                                )}
                             </p>
                             <p className="text-xs text-gray-400 line-clamp-1">
-                              Pembayaran via <span className="font-semibold text-gray-500">{order.paymentMethod.replace("_", " ")}</span>
+                              Pembayaran via <span className="font-semibold text-gray-500">{order.paymentMethod ? order.paymentMethod.replace("_", " ") : "-"}</span>
                             </p>
                          </div>
                       </div>

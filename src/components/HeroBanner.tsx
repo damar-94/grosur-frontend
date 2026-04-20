@@ -46,7 +46,7 @@ export default function HeroBanner() {
           dynamicBullets: true,
         }}
         // Mobile: 180px height & sharp edges. Desktop: up to 400px height & rounded corners
-        className="h-[180px] w-full sm:h-[250px] md:h-[350px] lg:h-[400px] md:rounded-xl shadow-sm z-0"
+        className="h-[100px] w-full sm:h-[150px] md:h-[200px] lg:h-[285px] md:rounded-xl shadow-sm z-0"
       >
         {banners.map((banner) => (
           <SwiperSlide key={banner.id}>

@@ -1,56 +1,42 @@
 import { useState, useEffect } from "react";
-
-interface LocationState {
-  coordinates: { lat: number; lng: number } | null;
-  error: string | null;
-  isLoading: boolean;
-}
+import { useLocationStore } from "@/stores/useLocationStore";
 
 export const useGeolocation = () => {
-  const [location, setLocation] = useState<LocationState>({
-    coordinates: null,
-    error: null,
-    isLoading: true,
-  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Connect to Zustand Actions
+  const setLocation = useLocationStore((state) => state.setLocation);
+  const setLocationDenied = useLocationStore((state) => state.setLocationDenied);
 
   useEffect(() => {
-    // Check if the browser supports geolocation
     if (!navigator.geolocation) {
-      setLocation({
-        coordinates: null,
-        error: "Browser Anda tidak mendukung fitur lokasi.",
-        isLoading: false,
-      });
+      setError("Browser Anda tidak mendukung fitur lokasi.");
+      setLocationDenied(true);
+      setIsLoading(false);
       return;
     }
 
-    // Request the location
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setLocation({
-          coordinates: {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          },
-          error: null,
-          isLoading: false,
-        });
+        // Save globally to Zustand
+        setLocation(position.coords.latitude, position.coords.longitude);
+        setError(null);
+        setIsLoading(false);
       },
-      (error) => {
-        // Handle different error codes (denied, unavailable, timeout)
+      (err) => {
         let errorMessage = "Gagal mendapatkan lokasi.";
-        if (error.code === error.PERMISSION_DENIED) {
-          errorMessage = "Izin lokasi ditolak. Silakan izinkan akses lokasi di pengaturan browser Anda.";
+        if (err.code === err.PERMISSION_DENIED) {
+          errorMessage = "Izin lokasi ditolak. Menggunakan toko utama.";
         }
 
-        setLocation({
-          coordinates: null,
-          error: errorMessage,
-          isLoading: false,
-        });
+        // Trigger fallback globally
+        setLocationDenied(true);
+        setError(errorMessage);
+        setIsLoading(false);
       }
     );
-  }, []);
+  }, [setLocation, setLocationDenied]);
 
-  return location;
+  return { isLoading, error };
 };

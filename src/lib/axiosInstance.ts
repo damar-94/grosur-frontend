@@ -22,8 +22,9 @@ api.interceptors.response.use(
       if (typeof window !== "undefined") {
         const isLoginPage = window.location.pathname === "/login";
         const isHomePage = window.location.pathname === "/";
+        const isAuthMe = error.config?.url === "/auth/me";
 
-        if (status === 401 && !isLoginPage) {
+        if (status === 401 && !isLoginPage && !isAuthMe) {
           window.location.href = "/login";
         } else if (status === 403 && data?.code === "FORBIDDEN" && !isHomePage) {
           window.location.href = "/";

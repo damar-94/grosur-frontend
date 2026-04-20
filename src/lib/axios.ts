@@ -1,6 +1,6 @@
 // src/lib/axios.ts
 import axios from 'axios';
-import { useAuthStore } from '@/stores/authStore';
+import { useAppStore } from '@/stores/useAppStore';
 
 const api = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001/api',
@@ -16,7 +16,7 @@ api.interceptors.response.use(
             console.warn("Session expired. Redirecting to login...");
 
             // Clear Zustand store
-            useAuthStore.getState().logout();
+            useAppStore.getState().logout();
 
             // Redirect to login if we are in the browser
             if (typeof window !== 'undefined') {
