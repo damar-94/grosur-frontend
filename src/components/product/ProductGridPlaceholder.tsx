@@ -20,7 +20,7 @@ export default function ProductGridPlaceholder() {
                     // 2. Fetch products for that store
                     const productRes = await productService.getProducts({ storeId: activeStoreId, limit: 12 });
                     if (productRes?.success) {
-                        setProducts(productRes.items);
+                        setProducts(productRes.data.items);
                     }
                 }
             } catch (error) {
