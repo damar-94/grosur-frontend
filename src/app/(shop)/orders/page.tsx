@@ -18,10 +18,10 @@ import {
 import { fetchOrders, type Order } from "@/services/checkoutService";
 import { useAppStore } from "@/stores/useAppStore";
 
-type OrderStatus = "ALL" | "PENDING" | "PROCESSING" | "SHIPPED" | "DELIVERED" | "CANCELLED";
+type OrderStatus = "ALL" | "WAITING_PAYMENT" | "WAITING_CONFIRMATION" | "PROCESSED" | "SENT" | "CONFIRMED" | "CANCELLED";
 
 export default function OrdersPage() {
-  const { user } = useAppStore();
+  const { user, isLoading: isAuthLoading } = useAppStore();
   const router = useRouter();
 
   const [orders, setOrders] = useState<Order[]>([]);
@@ -30,11 +30,28 @@ export default function OrdersPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
+  const [searchInput, setSearchInput] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [dateInput, setDateInput] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSearchQuery(searchInput);
+    setDateFilter(dateInput);
+    setPage(1);
+  };
+
   const loadOrders = useCallback(async () => {
     setIsLoading(true);
     try {
       const filter = statusFilter === "ALL" ? undefined : statusFilter;
-      const data = await fetchOrders({ page, status: filter });
+      const data = await fetchOrders({ 
+        page, 
+        status: filter,
+        search: searchQuery || undefined,
+        date: dateFilter || undefined
+      });
       setOrders(data.orders);
       setTotalPages(data.totalPages);
     } catch (err) {
@@ -42,25 +59,28 @@ export default function OrdersPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [page, statusFilter]);
+  }, [page, statusFilter, searchQuery, dateFilter]);
 
   useEffect(() => {
+    if (isAuthLoading) return;
     if (!user) {
       router.push("/login");
       return;
     }
     loadOrders();
-  }, [user, router, loadOrders]);
+  }, [user, isAuthLoading, router, loadOrders]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "PENDING":
+      case "WAITING_PAYMENT":
         return "bg-amber-100 text-amber-700 border-amber-200";
-      case "PROCESSING":
+      case "WAITING_CONFIRMATION":
         return "bg-blue-100 text-blue-700 border-blue-200";
-      case "SHIPPED":
+      case "PROCESSED":
+        return "bg-cyan-100 text-cyan-700 border-cyan-200";
+      case "SENT":
         return "bg-indigo-100 text-indigo-700 border-indigo-200";
-      case "DELIVERED":
+      case "CONFIRMED":
         return "bg-emerald-100 text-emerald-700 border-emerald-200";
       case "CANCELLED":
         return "bg-rose-100 text-rose-700 border-rose-200";
@@ -69,12 +89,25 @@ export default function OrdersPage() {
     }
   };
 
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "WAITING_PAYMENT": return "Menunggu Bayar";
+      case "WAITING_CONFIRMATION": return "Menunggu Konfirmasi";
+      case "PROCESSED": return "Diproses";
+      case "SENT": return "Dikirim";
+      case "CONFIRMED": return "Selesai";
+      case "CANCELLED": return "Dibatalkan";
+      default: return status;
+    }
+  };
+
   const statusOptions: { label: string; value: OrderStatus }[] = [
     { label: "Semua", value: "ALL" },
-    { label: "Menunggu", value: "PENDING" },
-    { label: "Diproses", value: "PROCESSING" },
-    { label: "Dikirim", value: "SHIPPED" },
-    { label: "Selesai", value: "DELIVERED" },
+    { label: "Menunggu Bayar", value: "WAITING_PAYMENT" },
+    { label: "Konfirmasi", value: "WAITING_CONFIRMATION" },
+    { label: "Diproses", value: "PROCESSED" },
+    { label: "Dikirim", value: "SENT" },
+    { label: "Selesai", value: "CONFIRMED" },
     { label: "Dibatalkan", value: "CANCELLED" },
   ];
 
@@ -115,6 +148,53 @@ export default function OrdersPage() {
         </div>
       </div>
 
+      {/* ── Search & Date Filter ── */}
+      <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 mb-8">
+        <div className="relative flex-1">
+          <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+            <FiSearch className="text-gray-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Cari No. Order..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#00997a]/20 focus:border-[#00997a] transition-all"
+          />
+        </div>
+        <div className="sm:w-48">
+          <input
+            type="date"
+            value={dateInput}
+            onChange={(e) => setDateInput(e.target.value)}
+            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#00997a]/20 focus:border-[#00997a] transition-all text-gray-600"
+          />
+        </div>
+        <div className="flex gap-2">
+          <button
+            type="submit"
+            className="flex-1 sm:flex-none px-6 py-2.5 bg-[#00997a] text-white font-bold rounded-xl hover:bg-[#007a61] transition-all shadow-sm shadow-[#00997a]/20"
+          >
+            Cari
+          </button>
+          {(searchQuery || dateFilter) && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchInput("");
+                setSearchQuery("");
+                setDateInput("");
+                setDateFilter("");
+                setPage(1);
+              }}
+              className="px-6 py-2.5 bg-gray-100 text-gray-600 font-bold rounded-xl hover:bg-gray-200 transition-all whitespace-nowrap"
+            >
+              Reset
+            </button>
+          )}
+        </div>
+      </form>
+
       {isLoading ? (
         /* Loading State */
         <div className="space-y-4">
@@ -139,7 +219,9 @@ export default function OrdersPage() {
           </div>
           <h2 className="text-xl font-bold text-[#1a1a1a] mb-2">Belum ada pesanan</h2>
           <p className="text-gray-400 text-sm max-w-xs leading-relaxed mb-8">
-            Kamu belum memiliki riwayat pesanan {statusFilter !== "ALL" ? `dengan status ${statusFilter.toLowerCase()}` : ""}.
+            {(searchQuery || dateFilter) 
+              ? "Tidak ada pesanan yang sesuai dengan filter pencarianmu." 
+              : `Kamu belum memiliki riwayat pesanan ${statusFilter !== "ALL" ? `dengan status ${statusFilter.toLowerCase()}` : ""}.`}
           </p>
           <Link
             href="/"
@@ -164,7 +246,7 @@ export default function OrdersPage() {
                 key={order.id}
                 className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-[#00997a]/30 transition-all overflow-hidden group"
               >
-                <Link href={order.status === "PENDING" && order.paymentStatus === "PENDING" ? `/checkout/${order.id}/payment` : `/checkout/${order.id}/success`}>
+                <Link href={order.status === "WAITING_PAYMENT" && order.paymentStatus === "PENDING" ? `/checkout/${order.id}/payment` : `/orders/${order.id}`}>
                   <div className="p-5 md:p-6">
                     <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                       <div className="flex items-center gap-3">
@@ -180,7 +262,7 @@ export default function OrdersPage() {
                         </div>
                       </div>
                       <span className={`text-[10px] font-extrabold uppercase tracking-wider px-3 py-1.5 rounded-full border ${getStatusColor(order.status)}`}>
-                        {order.status}
+                        {getStatusLabel(order.status)}
                       </span>
                     </div>
 
@@ -188,11 +270,22 @@ export default function OrdersPage() {
                       {/* Products Summary */}
                       <div className="md:col-span-2 flex items-center gap-4">
                          <div className="flex-1">
-                            <p className="text-sm text-gray-600 line-clamp-1">
-                              Pembayaran via <span className="font-semibold">{order.paymentMethod.replace("_", " ")}</span>
+                            <p className="font-bold text-[#1a1a1a] text-sm mb-1 leading-tight line-clamp-1">
+                               {order.items && order.items.length > 0 ? (
+                                  <>
+                                     {order.items[0].product.name}
+                                     {order.items.length > 1 && (
+                                        <span className="text-gray-500 font-normal ml-1">
+                                           + {order.items.length - 1} produk lainnya
+                                        </span>
+                                     )}
+                                  </>
+                               ) : (
+                                  "Pesanan"
+                               )}
                             </p>
-                            <p className="text-xs text-gray-400 mt-1">
-                               Dikirim ke <span className="text-gray-600">{order.address?.city}</span>
+                            <p className="text-xs text-gray-400 line-clamp-1">
+                              Pembayaran via <span className="font-semibold text-gray-500">{order.paymentMethod.replace("_", " ")}</span>
                             </p>
                          </div>
                       </div>
@@ -214,7 +307,7 @@ export default function OrdersPage() {
                 </Link>
 
                 {/* Footer Action for Pending manual payments */}
-                {order.status === "PENDING" && order.paymentStatus === "PENDING" && order.paymentMethod === "MANUAL_TRANSFER" && (
+                {order.status === "WAITING_PAYMENT" && order.paymentStatus === "PENDING" && order.paymentMethod === "MANUAL_TRANSFER" && (
                   <div className="bg-amber-50 px-6 py-3 flex items-center justify-between">
                     <div className="flex items-center gap-2 text-amber-700">
                       <FiAlertCircle size={14} />

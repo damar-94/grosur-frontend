@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -10,11 +10,11 @@ import {
   FiArrowLeft,
   FiLoader,
   FiCopy,
-  FiExternalLink,
   FiAlertCircle,
   FiImage,
   FiX,
   FiPackage,
+  FiClock,
 } from "react-icons/fi";
 import { fetchOrder, uploadPaymentProof, type Order } from "@/services/checkoutService";
 import { useAppStore } from "@/stores/useAppStore";
@@ -24,6 +24,14 @@ const BANK_ACCOUNTS = [
   { bank: "BCA", account: "1234567890", name: "PT. Grosur Indonesia" },
   { bank: "Mandiri", account: "0987654321", name: "PT. Grosur Indonesia" },
 ];
+
+// ─── Allowed file types & max size ────────────────────────────────────────────
+const ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png"];
+const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/jpg"];
+const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1MB
+
+// ─── Payment Deadline: 1 hour ─────────────────────────────────────────────────
+const PAYMENT_DEADLINE_MS = 60 * 60 * 1000; // 1 hour
 
 export default function PaymentPage() {
   const { orderId } = useParams<{ orderId: string }>();
@@ -37,6 +45,11 @@ export default function PaymentPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [copiedAcc, setCopiedAcc] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  // ─── Countdown Timer State ──────────────────────────────────────────────────
+  const [timeLeft, setTimeLeft] = useState<number>(PAYMENT_DEADLINE_MS);
+  const [isExpired, setIsExpired] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -50,9 +63,19 @@ export default function PaymentPage() {
       try {
         const data = await fetchOrder(orderId);
         setOrder(data);
+
+        // Calculate remaining time
+        const createdAt = new Date(data.createdAt).getTime();
+        const remaining = PAYMENT_DEADLINE_MS - (Date.now() - createdAt);
+        if (remaining <= 0) {
+          setIsExpired(true);
+          setTimeLeft(0);
+        } else {
+          setTimeLeft(remaining);
+        }
       } catch {
         toast.error("Pesanan tidak ditemukan");
-        router.push("/");
+        router.push("/orders");
       } finally {
         setIsLoading(false);
       }
@@ -60,39 +83,110 @@ export default function PaymentPage() {
     load();
   }, [orderId, user, router]);
 
-  // ─── File Handling ───────────────────────────────────────────────────────────
+  // ─── Countdown Timer ────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (isExpired || uploadSuccess || !order) return;
+    if (order.paymentStatus === "PAID" || order.status === "WAITING_CONFIRMATION") return;
+
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1000) {
+          setIsExpired(true);
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1000;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isExpired, uploadSuccess, order]);
+
+  // ─── Format time ────────────────────────────────────────────────────────────
+  const formatTime = (ms: number) => {
+    const totalSec = Math.max(0, Math.floor(ms / 1000));
+    const hours = Math.floor(totalSec / 3600);
+    const minutes = Math.floor((totalSec % 3600) / 60);
+    const seconds = totalSec % 60;
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  };
+
+  // ─── File Validation ────────────────────────────────────────────────────────
+  const validateFile = useCallback((file: File): string | null => {
+    // Check extension
+    const fileName = file.name.toLowerCase();
+    const hasValidExt = ALLOWED_EXTENSIONS.some((ext) => fileName.endsWith(ext));
+    if (!hasValidExt) {
+      return "Hanya file .jpg, .jpeg, dan .png yang diperbolehkan";
+    }
+
+    // Check MIME type
+    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+      return "Format file tidak valid. Hanya JPG, JPEG, dan PNG yang diperbolehkan";
+    }
+
+    // Check file size (max 1MB)
+    if (file.size > MAX_FILE_SIZE) {
+      return `Ukuran file maksimal 1 MB. File Anda: ${(file.size / 1024 / 1024).toFixed(2)} MB`;
+    }
+
+    return null;
+  }, []);
+
+  // ─── File Handling ──────────────────────────────────────────────────────────
+  const processFile = useCallback(
+    (file: File) => {
+      const error = validateFile(file);
+      if (error) {
+        toast.error(error);
+        return;
+      }
+      setSelectedFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    },
+    [validateFile]
+  );
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    const isImage = file.type.startsWith("image/");
-    const isPdf = file.type === "application/pdf";
-    if (!isImage && !isPdf) {
-      toast.error("Hanya file gambar (JPG, PNG) atau PDF yang diperbolehkan");
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Ukuran file maksimal 5 MB");
-      return;
-    }
-
-    setSelectedFile(file);
-    if (isImage) {
-      setPreviewUrl(URL.createObjectURL(file));
-    } else {
-      setPreviewUrl(null); // PDF: no preview
-    }
+    processFile(file);
   };
 
   const handleRemoveFile = () => {
     setSelectedFile(null);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  // ─── Drag & Drop ───────────────────────────────────────────────────────────
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) processFile(file);
   };
 
   // ─── Upload ──────────────────────────────────────────────────────────────────
   const handleUpload = async () => {
     if (!selectedFile || !order) return;
+
+    if (isExpired) {
+      toast.error("Batas waktu pembayaran telah habis. Pesanan dibatalkan otomatis.");
+      return;
+    }
+
     setIsUploading(true);
     try {
       await uploadPaymentProof(order.id, selectedFile);
@@ -126,19 +220,27 @@ export default function PaymentPage() {
   if (!order) return null;
 
   const isManual = order.paymentMethod === "MANUAL_TRANSFER";
-  const isGateway = order.paymentMethod === "PAYMENT_GATEWAY";
   const isPaid = order.paymentStatus === "PAID";
+  const isWaitingConfirmation = order.status === "WAITING_CONFIRMATION";
+
+  // Determine timer urgency
+  const isUrgent = timeLeft < 10 * 60 * 1000; // < 10 minutes
+  const isCritical = timeLeft < 5 * 60 * 1000; // < 5 minutes
 
   return (
     <div className="max-w-[680px] mx-auto px-4 py-8">
       {/* ── Header ── */}
       <div className="flex items-center gap-3 mb-8">
-        <Link href="/" className="text-gray-400 hover:text-[#00997a] transition-colors">
+        <Link href="/orders" className="text-gray-400 hover:text-[#00997a] transition-colors">
           <FiArrowLeft size={20} />
         </Link>
         <div>
           <h1 className="text-2xl font-bold text-[#1a1a1a]">
-            {uploadSuccess || isPaid ? "Pembayaran Berhasil" : "Selesaikan Pembayaran"}
+            {uploadSuccess || isPaid || isWaitingConfirmation
+              ? "Pembayaran Berhasil"
+              : isExpired
+              ? "Waktu Habis"
+              : "Selesaikan Pembayaran"}
           </h1>
           <p className="text-sm text-gray-400 mt-0.5">
             Pesanan #{order.orderNumber || order.id.slice(0, 8).toUpperCase()}
@@ -146,8 +248,98 @@ export default function PaymentPage() {
         </div>
       </div>
 
+      {/* ── Countdown Timer ── */}
+      {isManual && !uploadSuccess && !isPaid && !isWaitingConfirmation && !isExpired && (
+        <div
+          className={`mb-6 rounded-2xl border-2 p-4 flex items-center gap-4 transition-all ${
+            isCritical
+              ? "bg-red-50 border-red-200 animate-pulse"
+              : isUrgent
+              ? "bg-amber-50 border-amber-200"
+              : "bg-blue-50 border-blue-200"
+          }`}
+        >
+          <div
+            className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
+              isCritical
+                ? "bg-red-100"
+                : isUrgent
+                ? "bg-amber-100"
+                : "bg-blue-100"
+            }`}
+          >
+            <FiClock
+              size={24}
+              className={
+                isCritical
+                  ? "text-red-500"
+                  : isUrgent
+                  ? "text-amber-500"
+                  : "text-blue-500"
+              }
+            />
+          </div>
+          <div className="flex-1">
+            <p
+              className={`text-xs font-semibold uppercase tracking-wide ${
+                isCritical
+                  ? "text-red-500"
+                  : isUrgent
+                  ? "text-amber-600"
+                  : "text-blue-600"
+              }`}
+            >
+              Batas Waktu Pembayaran
+            </p>
+            <p
+              className={`text-2xl font-extrabold tracking-wider font-mono ${
+                isCritical
+                  ? "text-red-600"
+                  : isUrgent
+                  ? "text-amber-700"
+                  : "text-blue-700"
+              }`}
+            >
+              {formatTime(timeLeft)}
+            </p>
+          </div>
+          <p
+            className={`text-[10px] font-medium max-w-[120px] text-right ${
+              isCritical
+                ? "text-red-400"
+                : isUrgent
+                ? "text-amber-500"
+                : "text-blue-400"
+            }`}
+          >
+            Selesaikan pembayaran sebelum waktu habis
+          </p>
+        </div>
+      )}
+
+      {/* ── Expired Banner ── */}
+      {isExpired && !uploadSuccess && !isPaid && !isWaitingConfirmation && (
+        <div className="mb-6 bg-red-50 border border-red-200 rounded-2xl p-6 flex flex-col items-center gap-3 text-center">
+          <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center">
+            <FiAlertCircle size={32} className="text-red-500" />
+          </div>
+          <div>
+            <p className="font-bold text-red-800 text-lg">Waktu Pembayaran Habis</p>
+            <p className="text-sm text-red-600 mt-1 max-w-xs">
+              Batas waktu pembayaran 1 jam telah habis. Pesanan ini telah dibatalkan secara otomatis.
+            </p>
+          </div>
+          <Link
+            href="/orders"
+            className="mt-2 px-6 py-2.5 bg-[#00997a] text-white text-sm font-bold rounded-xl hover:bg-[#007a61] transition-colors"
+          >
+            Lihat Pesanan Lain
+          </Link>
+        </div>
+      )}
+
       {/* ── Success Banner ── */}
-      {(uploadSuccess || isPaid) && (
+      {(uploadSuccess || isPaid || isWaitingConfirmation) && (
         <div className="mb-6 bg-emerald-50 border border-emerald-200 rounded-2xl p-6 flex flex-col items-center gap-3 text-center">
           <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center">
             <FiCheckCircle size={32} className="text-emerald-500" />
@@ -163,10 +355,10 @@ export default function PaymentPage() {
             </p>
           </div>
           <Link
-            href="/"
+            href="/orders"
             className="mt-2 px-6 py-2.5 bg-[#00997a] text-white text-sm font-bold rounded-xl hover:bg-[#007a61] transition-colors"
           >
-            Kembali ke Beranda
+            Lihat Pesanan Saya
           </Link>
         </div>
       )}
@@ -180,7 +372,7 @@ export default function PaymentPage() {
         <div className="space-y-2 text-sm">
           <div className="flex justify-between text-gray-600">
             <span>Status Pesanan</span>
-            <span className="font-semibold capitalize">{order.status}</span>
+            <span className="font-semibold capitalize">{order.status?.replace(/_/g, " ")}</span>
           </div>
           <div className="flex justify-between text-gray-600">
             <span>Total Produk</span>
@@ -196,12 +388,6 @@ export default function PaymentPage() {
               </span>
             </div>
           )}
-          {order.warehouse && (
-            <div className="flex justify-between text-gray-600">
-              <span>Dikirim dari Gudang</span>
-              <span className="font-medium">{order.warehouse.name}</span>
-            </div>
-          )}
           <div className="flex justify-between text-gray-600">
             <span>Alamat Pengiriman</span>
             <span className="font-medium text-right max-w-[220px]">
@@ -212,7 +398,7 @@ export default function PaymentPage() {
       </div>
 
       {/* ═══════ MANUAL TRANSFER SECTION ═══════ */}
-      {isManual && !uploadSuccess && !isPaid && (
+      {isManual && !uploadSuccess && !isPaid && !isWaitingConfirmation && !isExpired && (
         <div className="space-y-5">
           {/* Bank Accounts */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
@@ -256,20 +442,47 @@ export default function PaymentPage() {
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <h2 className="font-bold text-[#1a1a1a] mb-1">Upload Bukti Pembayaran</h2>
             <p className="text-xs text-gray-400 mb-4">
-              Format: JPG, PNG, atau PDF. Maks 5 MB.
+              Format: <span className="font-semibold text-gray-500">.jpg, .jpeg, .png</span> — Maksimal{" "}
+              <span className="font-semibold text-gray-500">1 MB</span>
             </p>
 
             {!selectedFile ? (
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full border-2 border-dashed border-gray-200 rounded-xl py-10 flex flex-col items-center gap-3 hover:border-[#00997a] hover:bg-[#00997a]/5 transition-all group"
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                className={`w-full border-2 border-dashed rounded-xl py-10 flex flex-col items-center gap-3 transition-all group ${
+                  isDragging
+                    ? "border-[#00997a] bg-[#00997a]/10 scale-[1.02]"
+                    : "border-gray-200 hover:border-[#00997a] hover:bg-[#00997a]/5"
+                }`}
               >
-                <div className="w-12 h-12 rounded-full bg-gray-100 group-hover:bg-[#00997a]/10 flex items-center justify-center transition-colors">
-                  <FiImage size={22} className="text-gray-400 group-hover:text-[#00997a]" />
+                <div
+                  className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
+                    isDragging
+                      ? "bg-[#00997a]/20"
+                      : "bg-gray-100 group-hover:bg-[#00997a]/10"
+                  }`}
+                >
+                  <FiImage
+                    size={22}
+                    className={
+                      isDragging
+                        ? "text-[#00997a]"
+                        : "text-gray-400 group-hover:text-[#00997a]"
+                    }
+                  />
                 </div>
                 <div className="text-center">
-                  <p className="text-sm font-semibold text-gray-600 group-hover:text-[#00997a]">
-                    Klik untuk memilih file
+                  <p
+                    className={`text-sm font-semibold ${
+                      isDragging
+                        ? "text-[#00997a]"
+                        : "text-gray-600 group-hover:text-[#00997a]"
+                    }`}
+                  >
+                    {isDragging ? "Lepaskan file di sini" : "Klik untuk memilih file"}
                   </p>
                   <p className="text-xs text-gray-400 mt-0.5">atau seret & lepas file di sini</p>
                 </div>
@@ -278,19 +491,13 @@ export default function PaymentPage() {
               <div className="space-y-3">
                 {/* Preview */}
                 <div className="relative">
-                  {previewUrl ? (
+                  {previewUrl && (
                     <div className="relative rounded-xl overflow-hidden border border-gray-200 max-h-64">
-                      <img src={previewUrl} alt="Preview" className="w-full h-full object-contain bg-gray-50" />
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border border-gray-200">
-                      <FiUpload size={20} className="text-gray-400" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-700">{selectedFile.name}</p>
-                        <p className="text-xs text-gray-400">
-                          {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                        </p>
-                      </div>
+                      <img
+                        src={previewUrl}
+                        alt="Preview bukti bayar"
+                        className="w-full h-full object-contain bg-gray-50"
+                      />
                     </div>
                   )}
                   <button
@@ -301,27 +508,36 @@ export default function PaymentPage() {
                   </button>
                 </div>
 
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="text-xs text-[#00997a] hover:underline"
-                >
-                  Ganti file
-                </button>
+                {/* File info */}
+                <div className="flex items-center justify-between px-1">
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <FiImage size={12} />
+                    <span className="truncate max-w-[200px]">{selectedFile.name}</span>
+                    <span className="text-gray-300">|</span>
+                    <span>{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</span>
+                  </div>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="text-xs text-[#00997a] hover:underline font-medium"
+                  >
+                    Ganti file
+                  </button>
+                </div>
               </div>
             )}
 
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*,application/pdf"
+              accept=".jpg,.jpeg,.png"
               onChange={handleFileChange}
               className="hidden"
             />
 
             <button
               onClick={handleUpload}
-              disabled={!selectedFile || isUploading}
-              className="mt-4 w-full py-3.5 bg-[#00997a] hover:bg-[#007a61] text-white font-bold rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              disabled={!selectedFile || isUploading || isExpired}
+              className="mt-4 w-full py-3.5 bg-[#00997a] hover:bg-[#007a61] text-white font-bold rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm shadow-[#00997a]/20"
             >
               {isUploading ? (
                 <>
@@ -336,54 +552,6 @@ export default function PaymentPage() {
               )}
             </button>
           </div>
-        </div>
-      )}
-
-      {/* ═══════ PAYMENT GATEWAY SECTION ═══════ */}
-      {isGateway && !isPaid && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center space-y-4">
-          <div className="w-16 h-16 mx-auto rounded-full bg-blue-50 flex items-center justify-center">
-            <FiCreditCard size={28} className="text-blue-500" />
-          </div>
-          <div>
-            <h2 className="font-bold text-[#1a1a1a] text-lg">Selesaikan Pembayaran</h2>
-            <p className="text-sm text-gray-500 mt-1 max-w-xs mx-auto leading-relaxed">
-              Klik tombol di bawah untuk diarahkan ke halaman pembayaran Midtrans.
-              Pesanan akan otomatis diproses setelah pembayaran berhasil.
-            </p>
-          </div>
-
-          {order.paymentGatewayUrl ? (
-            <a
-              href={order.paymentGatewayUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-8 py-3.5 bg-[#00997a] hover:bg-[#007a61] text-white font-bold rounded-xl transition-all shadow-sm"
-            >
-              <FiCreditCard size={16} />
-              Bayar Sekarang
-              <FiExternalLink size={14} />
-            </a>
-          ) : (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-              <p className="text-sm text-amber-700">
-                Link pembayaran sedang disiapkan. Muat ulang halaman dalam beberapa saat.
-              </p>
-              <button
-                onClick={() => window.location.reload()}
-                className="mt-2 text-xs text-[#00997a] font-semibold hover:underline"
-              >
-                Muat Ulang Halaman
-              </button>
-            </div>
-          )}
-
-          <p className="text-xs text-gray-400">
-            Mengalami kendala?{" "}
-            <Link href="/bantuan" className="text-[#00997a] hover:underline">
-              Hubungi CS kami
-            </Link>
-          </p>
         </div>
       )}
     </div>
