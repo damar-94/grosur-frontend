@@ -43,7 +43,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
 
    const [confirmDialog, setConfirmDialog] = useState<{
       isOpen: boolean;
-      action: "accept" | "reject" | "ship" | null;
+      action: "accept" | "reject" | "ship" | "cancel" | null;
       title: string;
       description: string;
    }>({
@@ -89,6 +89,15 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
       });
    };
 
+   const handleCancelOrder = () => {
+      setConfirmDialog({
+         isOpen: true,
+         action: "cancel",
+         title: "Batalkan Pesanan",
+         description: "Apakah Anda yakin ingin MEMBATALKAN pesanan ini? Stok barang akan dikembalikan ke inventaris. Tindakan ini tidak dapat dibatalkan.",
+      });
+   };
+
    const executeAction = async () => {
       const { action } = confirmDialog;
       if (!action) return;
@@ -100,6 +109,9 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
          if (action === "ship") {
             await adminService.sendOrder(orderId);
             toast.success("Pesanan telah dikirim");
+         } else if (action === "cancel") {
+            await adminService.cancelOrder(orderId, "Dibatalkan oleh Admin");
+            toast.success("Pesanan telah dibatalkan dan stok dikembalikan");
          } else {
             await adminService.confirmPayment(orderId, action);
             toast.success(action === "accept" ? "Pembayaran diterima" : "Pembayaran ditolak");
@@ -254,14 +266,24 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
                                  Pesanan ini sudah dibayar dan siap dikirim. Pastikan stok fisik barang sudah tersedia di gudang sebelum menekan tombol kirim.
                               </p>
                            </div>
-                           <button
-                              onClick={handleShipOrder}
-                              disabled={isUpdating}
-                              className="w-full md:w-auto px-8 py-3 bg-[#00997a] text-white rounded-xl text-xs font-extrabold uppercase tracking-wider hover:bg-[#008066] hover:shadow-lg hover:shadow-[#00997a]/20 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                           >
-                              {isUpdating ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <FiTruck size={16} />}
-                              Kirim Pesanan Sekarang
-                           </button>
+                           <div className="flex flex-wrap gap-3">
+                              <button
+                                 onClick={handleShipOrder}
+                                 disabled={isUpdating}
+                                 className="px-8 py-3 bg-[#00997a] text-white rounded-xl text-xs font-extrabold uppercase tracking-wider hover:bg-[#008066] hover:shadow-lg hover:shadow-[#00997a]/20 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                              >
+                                 {isUpdating ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <FiTruck size={16} />}
+                                 Kirim Pesanan Sekarang
+                              </button>
+                              <button
+                                 onClick={handleCancelOrder}
+                                 disabled={isUpdating}
+                                 className="px-8 py-3 bg-white border border-rose-100 text-rose-500 rounded-xl text-xs font-extrabold uppercase tracking-wider hover:bg-rose-50 hover:border-rose-200 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                              >
+                                 <FiXCircle size={16} />
+                                 Batalkan Pesanan
+                              </button>
+                           </div>
                         </div>
                      ) : order.paymentProof ? (
                         <div className="space-y-4">
@@ -295,6 +317,14 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
                                     <FiXCircle size={16} />
                                     Tolak Pembayaran
                                  </button>
+                                 <button
+                                    onClick={handleCancelOrder}
+                                    disabled={isUpdating}
+                                    className="px-6 py-2.5 bg-white border border-gray-200 text-gray-400 rounded-xl text-xs font-extrabold uppercase tracking-wider hover:bg-gray-50 hover:text-gray-600 transition-all disabled:opacity-50 flex items-center gap-2"
+                                 >
+                                    <FiXCircle size={16} />
+                                    Batalkan Pesanan
+                                 </button>
                               </div>
                            )}
                         </div>
@@ -304,6 +334,28 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
                            <p className="text-sm text-gray-400 font-medium">Belum ada bukti pembayaran diunggah</p>
                         </div>
                      )}
+                  </div>
+               )}
+
+               {order.status === "WAITING_PAYMENT" && (
+                  <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+                     <div className="flex items-center gap-3">
+                        <div className="p-3 bg-amber-50 rounded-xl text-amber-500">
+                           <FiClock size={24} />
+                        </div>
+                        <div>
+                           <p className="text-sm font-bold text-gray-800">Menunggu Pembayaran</p>
+                           <p className="text-xs text-gray-400 font-medium">Pengguna belum melakukan pembayaran atau belum mengunggah bukti.</p>
+                        </div>
+                     </div>
+                     <button
+                        onClick={handleCancelOrder}
+                        disabled={isUpdating}
+                        className="w-full md:w-auto px-8 py-3 bg-white border border-rose-100 text-rose-500 rounded-xl text-xs font-extrabold uppercase tracking-wider hover:bg-rose-50 hover:border-rose-200 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                     >
+                        <FiXCircle size={16} />
+                        Batalkan Pesanan
+                     </button>
                   </div>
                )}
             </div>
@@ -331,7 +383,7 @@ export default function AdminOrderDetailPage({ params }: { params: Promise<{ id:
                            : "bg-rose-500 hover:bg-rose-600 shadow-rose-500/20"
                      }`}
                   >
-                     {confirmDialog.action === "accept" ? "Ya, Terima" : confirmDialog.action === "ship" ? "Ya, Kirim" : "Ya, Tolak"}
+                     {confirmDialog.action === "accept" ? "Ya, Terima" : confirmDialog.action === "ship" ? "Ya, Kirim" : confirmDialog.action === "cancel" ? "Ya, Batalkan" : "Ya, Tolak"}
                   </AlertDialogAction>
                </AlertDialogFooter>
             </AlertDialogContent>
