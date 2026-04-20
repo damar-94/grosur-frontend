@@ -83,7 +83,7 @@ export function StockTransferModal({
   const [open, setOpen] = React.useState(false);
 
   const form = useForm<TransferFormValues>({
-    resolver: zodResolver(transferSchema),
+    resolver: zodResolver(transferSchema) as any,
     defaultValues: {
       fromStoreId: "",
       toStoreId: "",

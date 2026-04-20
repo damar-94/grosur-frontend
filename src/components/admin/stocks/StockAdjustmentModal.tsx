@@ -57,7 +57,7 @@ export function StockAdjustmentModal({
   const currentStock = product?.inventory?.quantity || 0;
 
   const form = useForm<StockAdjustmentValues>({
-    resolver: zodResolver(stockAdjustmentSchema),
+    resolver: zodResolver(stockAdjustmentSchema) as any,
     defaultValues: {
       change: 0,
       reason: "",
