@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation"; // 💡 Added useRouter
 import { api } from "@/lib/axiosInstance"; // 💡 Added API instance
@@ -13,11 +14,19 @@ import {
   FiLogIn,
   FiLogOut
 } from "react-icons/fi";
+import { useSearchParams } from "next/navigation"; // 💡 Added useSearchParams
 import { useAppStore } from "@/stores/useAppStore";
 
 export default function Navbar() {
   const { user, setUser, cartCount } = useAppStore();
+  const searchParams = useSearchParams(); // 💡 Added useSearchParams
+  const [searchQuery, setSearchQuery] = React.useState(searchParams.get("search") || "");
   const router = useRouter();
+
+  // Keep search input in sync with URL
+  React.useEffect(() => {
+    setSearchQuery(searchParams.get("search") || "");
+  }, [searchParams]);
 
   // 💡 THE FIX: Full-stack logout logic
   const handleLogout = async () => {
@@ -34,6 +43,20 @@ export default function Navbar() {
     }
   };
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const params = new URLSearchParams(searchParams.toString());
+    if (searchQuery.trim()) {
+        params.set("search", searchQuery.trim());
+    } else {
+        params.delete("search");
+    }
+    params.set("page", "1"); // Reset page on new search
+    
+    router.push(`/products?${params.toString()}`);
+  };
+
   return (
     <>
       {/* 1. TOP HEADER (Sticky Search & Desktop Nav) */}
@@ -47,29 +70,33 @@ export default function Navbar() {
           </Link>
 
           {/* Mobile Search Bar (Takes full width on mobile) */}
-          <div className="flex w-full md:hidden relative items-center">
+          <form onSubmit={handleSearch} className="flex w-full md:hidden relative items-center">
             <input
               type="text"
               placeholder="Cari di Grosur..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full rounded-md border border-border bg-background py-2 pl-4 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-all"
             />
-            <button className="absolute right-3 text-muted-foreground">
+            <button type="submit" className="absolute right-3 text-muted-foreground">
               <FiSearch size={18} />
             </button>
-          </div>
+          </form>
 
           {/* Desktop Search Bar */}
           <div className="hidden flex-1 items-center justify-center px-8 md:flex">
-            <div className="relative w-full max-w-2xl">
+            <form onSubmit={handleSearch} className="relative w-full max-w-2xl">
               <input
                 type="text"
                 placeholder="Cari kebutuhan harianmu..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full rounded-md border border-border bg-background py-2.5 pl-4 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-all"
               />
-              <button className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors">
+              <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors">
                 <FiSearch size={20} />
               </button>
-            </div>
+            </form>
           </div>
 
           {/* Desktop Icons (Hidden on Mobile) */}
