@@ -15,7 +15,7 @@ import {
   FiLoader,
   FiArrowLeft,
 } from "react-icons/fi";
-import { fetchOrders, cancelExpiredOrders, type Order } from "@/services/checkoutService";
+import { fetchOrders, cancelExpiredOrders, autoConfirmShippedOrders, confirmOrderReceipt, type Order } from "@/services/checkoutService";
 import { useAppStore } from "@/stores/useAppStore";
 
 type OrderStatus = "ALL" | "WAITING_PAYMENT" | "WAITING_CONFIRMATION" | "PROCESSED" | "SENT" | "CONFIRMED" | "CANCELLED";
@@ -45,7 +45,10 @@ export default function OrdersPage() {
   const loadOrders = useCallback(async () => {
     setIsLoading(true);
     try {
-      await cancelExpiredOrders().catch(() => {}); // silently fail if cancel endpoint errors
+      await Promise.all([
+        cancelExpiredOrders().catch(() => {}),
+        autoConfirmShippedOrders().catch(() => {})
+      ]);
       const filter = statusFilter === "ALL" ? undefined : statusFilter;
       const data = await fetchOrders({ 
         page, 
@@ -307,6 +310,33 @@ export default function OrdersPage() {
                     </div>
                   </div>
                 </Link>
+                
+                {/* Action Buttons for SENT status */}
+                {order.status === "SENT" && (
+                   <div className="bg-indigo-50 px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-indigo-100">
+                      <div className="flex items-center gap-2 text-indigo-700">
+                         <FiAlertCircle size={14} />
+                         <span className="text-xs font-medium">Pesananmu sudah dalam perjalanan. Sudah sampai?</span>
+                      </div>
+                      <button
+                         onClick={async (e) => {
+                            e.preventDefault();
+                            if (confirm("Konfirmasi penerimaan pesanan?")) {
+                               try {
+                                  await confirmOrderReceipt(order.id);
+                                  toast.success("Pesanan selesai! Terima kasih sudah berbelanja.");
+                                  loadOrders();
+                               } catch (err: any) {
+                                  toast.error(err.response?.data?.message || "Gagal konfirmasi pesanan");
+                               }
+                            }
+                         }}
+                         className="w-full sm:w-auto px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-colors shadow-sm"
+                      >
+                         Selesaikan Pesanan
+                      </button>
+                   </div>
+                )}
 
                 {/* Footer Action for Pending manual payments */}
                 {order.status === "WAITING_PAYMENT" && order.paymentStatus === "PENDING" && order.paymentMethod === "MANUAL_TRANSFER" && (
