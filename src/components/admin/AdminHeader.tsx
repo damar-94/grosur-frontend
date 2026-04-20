@@ -20,6 +20,8 @@ import { useAppStore } from "@/stores/useAppStore";
 import { api } from "@/lib/axiosInstance";
 import { useRouter } from "next/navigation";
 
+import Link from "next/link";
+
 export function AdminHeader() {
   const { user, logout } = useAppStore();
   const router = useRouter();
@@ -108,9 +110,11 @@ export function AdminHeader() {
                     </p>
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuItem className="cursor-pointer">
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Profile Settings</span>
+                <DropdownMenuItem asChild className="cursor-pointer">
+                  <Link href="/profile" className="flex w-full items-center">
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile Settings</span>
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
