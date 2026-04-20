@@ -59,7 +59,7 @@ interface StoreData {
   name: string;
 }
 
-const discountSchema = z.object({
+const discountFormSchema = z.object({
   storeId: z.string().uuid("Toko harus dipilih"),
   type: z.enum(["PERCENT", "NOMINAL", "B1G1"]),
   // Base fields
@@ -76,10 +76,12 @@ const discountSchema = z.object({
     from: z.date(),
     to: z.date(),
   }).refine((data) => data.to > data.from, {
-    message: "Periode promo harus valid (Selisih minimal 1 hari).",
+    message: "Periode promo harus valid.",
     path: ["to"],
   }),
-}).refine((data) => {
+});
+
+const discountSchema = discountFormSchema.refine((data) => {
   if (data.type === "PERCENT") {
     if (!data.value || data.value <= 0 || data.value > 100) return false;
   }
@@ -96,7 +98,7 @@ const discountSchema = z.object({
   path: ["value"],
 });
 
-type DiscountFormValues = z.infer<typeof discountSchema>;
+type DiscountFormValues = z.infer<typeof discountFormSchema>;
 
 interface DiscountFormModalProps {
   isOpen: boolean;
@@ -118,7 +120,7 @@ export function DiscountFormModal({
   const [isFetchingProducts, setIsFetchingProducts] = React.useState(false);
 
   const form = useForm<DiscountFormValues>({
-    resolver: zodResolver(discountSchema),
+    resolver: zodResolver(discountSchema) as any,
     defaultValues: {
       storeId: preSelectedStoreId || "",
       type: "PERCENT",
@@ -140,7 +142,7 @@ export function DiscountFormModal({
       setIsFetchingProducts(true);
       productService.getProducts({ storeId: selectedStoreId, limit: 1000 })
         .then(res => {
-          if (res.success) setProducts(res.items || []);
+          if (res.success) setProducts(res.data.items || []);
         })
         .catch(() => toast.error("Gagal memuat produk cabang"))
         .finally(() => setIsFetchingProducts(false));

@@ -6,8 +6,7 @@ export const useGeolocation = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Connect to Zustand Actions
-  const setLocation = useLocationStore((state) => state.setLocation);
-  const setLocationDenied = useLocationStore((state) => state.setLocationDenied);
+  const { latitude, longitude, setLocation, setLocationDenied } = useLocationStore();
 
   useEffect(() => {
     if (!navigator.geolocation) {
@@ -38,5 +37,9 @@ export const useGeolocation = () => {
     );
   }, [setLocation, setLocationDenied]);
 
-  return { isLoading, error };
+  return { 
+    isLoading, 
+    error, 
+    coordinates: latitude && longitude ? { lat: latitude, lng: longitude } : null 
+  };
 };
