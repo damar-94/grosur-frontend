@@ -63,7 +63,7 @@ const formatRupiah = (value: number) =>
 
 export default function AdminProductsPage() {
   const router = useRouter();
-  const { user, nearestStore } = useAppStore();
+  const { user, nearestStore, setCurrentStore } = useAppStore();
   const isSuperAdmin = user?.role === "SUPER_ADMIN";
 
   const [products, setProducts] = useState<AdminProduct[]>([]);
@@ -91,11 +91,20 @@ export default function AdminProductsPage() {
           // If no store selected and we have stores, pick the first one as default
           if (!selectedStoreId && res.data.length > 0) {
             setSelectedStoreId(res.data[0].id);
+            setCurrentStore(res.data[0]);
           }
         }
       });
     }
-  }, [user, selectedStoreId]);
+  }, [user, selectedStoreId, setCurrentStore]);
+
+  const handleStoreChange = (storeId: string) => {
+    setSelectedStoreId(storeId);
+    const store = stores.find((s) => s.id === storeId);
+    if (store) {
+      setCurrentStore(store);
+    }
+  };
 
   const fetchProducts = useCallback(
     async (currentPage: number) => {
@@ -110,9 +119,12 @@ export default function AdminProductsPage() {
           page: currentPage,
           limit: 10,
         });
-        // getProducts returns public format; cast as AdminProduct for display
-        setProducts(res.items as unknown as AdminProduct[]);
-        setTotalPage(res.meta.totalPage);
+        if (res.success && res.data) {
+          setProducts(res.data.items as unknown as AdminProduct[]);
+          setTotalPage(res.data.meta.totalPage);
+        } else {
+          setProducts([]);
+        }
       } catch {
         toast.error("Gagal memuat daftar produk");
       } finally {
@@ -170,7 +182,7 @@ export default function AdminProductsPage() {
               </div>
               <Select
                 value={selectedStoreId}
-                onValueChange={setSelectedStoreId}
+                onValueChange={handleStoreChange}
               >
                 <SelectTrigger className="max-w-xs bg-white">
                   <SelectValue placeholder="Pilih Toko" />

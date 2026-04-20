@@ -19,12 +19,12 @@ export const useNearestStoreFetch = () => {
     const fetchStore = async () => {
       try {
         // If location exists, try nearest. If error/denied, go straight to fallback.
-        const endpoint = location ? "/store/my-store" : "/store/fallback";
+        const endpoint = location ? "/stores/my-store" : "/stores/fallback";
         const res = await api.get(endpoint);
         setNearestStore(res.data.data);
       } catch {
         // If nearest fails, fallback one last time
-        const fallback = await api.get("/store/fallback").catch(() => ({ data: { data: null } }));
+        const fallback = await api.get("/stores/fallback").catch(() => ({ data: { data: null } }));
         setNearestStore(fallback.data.data);
       } finally {
         setIsFetched(true); // Lock it to prevent double-fetching

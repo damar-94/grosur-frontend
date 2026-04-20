@@ -21,13 +21,13 @@ import {
 } from "@/components/ui/select";
 
 export default function StockManagementPage() {
-  const { user } = useAppStore();
+  const { user, currentStore, setCurrentStore } = useAppStore();
   const isSuperAdmin = user?.role === "SUPER_ADMIN";
   const storeAdminId = user?.managedStore?.id;
 
   const [stores, setStores] = React.useState<{ id: string; name: string }[]>([]);
   const [selectedStoreId, setSelectedStoreId] = React.useState<string | undefined>(
-    isSuperAdmin ? undefined : storeAdminId
+    isSuperAdmin ? (currentStore?.id || undefined) : storeAdminId
   );
 
   const [products, setProducts] = React.useState<Product[]>([]);
@@ -46,13 +46,22 @@ export default function StockManagementPage() {
           setStores(res.data);
           if (res.data.length > 0 && !selectedStoreId) {
             setSelectedStoreId(res.data[0].id); // Auto-select first store
+            setCurrentStore(res.data[0]);
           }
         }
       }).catch(() => {
         toast.error("Gagal memuat daftar toko");
       });
     }
-  }, [isSuperAdmin, selectedStoreId]);
+  }, [isSuperAdmin, selectedStoreId, setCurrentStore]);
+
+  const handleStoreChange = (storeId: string) => {
+    setSelectedStoreId(storeId);
+    const store = stores.find((s) => s.id === storeId);
+    if (store) {
+      setCurrentStore(store);
+    }
+  };
 
   // 2. Fetch Products/Inventory when selectedStoreId changes
   const fetchInventory = React.useCallback(async () => {
@@ -66,8 +75,8 @@ export default function StockManagementPage() {
       // Fetch products scoped by storeId to get their inventory quantity automatically
       const res = await productService.getProducts({ storeId: selectedStoreId, limit: 100 }); 
       // Limits to 100 arbitrarily. In real world, pagination needed.
-      if (res.success) {
-        setProducts(res.items || []);
+      if (res.success && res.data) {
+        setProducts(res.data.items as unknown as Product[] || []);
       }
     } catch (error) {
       console.error("Gagal memuat inventori:", error);
@@ -119,7 +128,7 @@ export default function StockManagementPage() {
           {isSuperAdmin ? (
             <Select
               value={selectedStoreId}
-              onValueChange={(val) => setSelectedStoreId(val)}
+              onValueChange={handleStoreChange}
             >
               <SelectTrigger className="w-[300px] border-primary/50 shadow-sm">
                 <SelectValue placeholder="Pilih toko target..." />

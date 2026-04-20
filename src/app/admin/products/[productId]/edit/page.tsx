@@ -32,8 +32,11 @@ interface EditProductPageProps {
 export default function EditProductPage({ params }: EditProductPageProps) {
   const { productId } = use(params);
   const router = useRouter();
-  const { nearestStore } = useAppStore();
-  const storeId = nearestStore?.id ?? "";
+  const { user, currentStore } = useAppStore();
+  
+  const storeId = user?.role === "STORE_ADMIN"
+    ? (user?.managedStore?.id ?? "")
+    : (currentStore?.id ?? "");
 
   const [product, setProduct] = useState<AdminProduct | null>(null);
   const [pageLoading, setPageLoading] = useState(true);

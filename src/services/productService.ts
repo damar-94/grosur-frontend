@@ -36,8 +36,11 @@ export interface Pagination {
 
 export interface ProductListResponse {
   success: boolean;
-  items: Product[];
-  meta: Pagination;
+  message: string;
+  data: {
+    items: Product[];
+    meta: Pagination;
+  };
 }
 
 export interface Category {
