@@ -47,6 +47,8 @@ interface AppState {
   nearestStore: Store | null;
   cartCount: number;
   currentStore: Store | null;
+  isManualStore: boolean;
+  storeMessage: string;
 
   // Cart
   cart: CartItem[];
@@ -59,7 +61,8 @@ interface AppState {
 
   // Actions – Store
   setNearestStore: (store: Store | null) => void;
-  setCurrentStore: (store: Store | null) => void;
+  setCurrentStore: (store: Store | null, isManual?: boolean) => void;
+  setStoreMessage: (message: string) => void;
 
   // Actions – Cart
   addToCart: (item: CartItem) => void;
@@ -77,6 +80,8 @@ export const useAppStore = create<AppState>()(
       isLoading: true,
       nearestStore: null,
       currentStore: null,
+      isManualStore: false,
+      storeMessage: "",
       cartCount: 0,
       cart: [],
 
@@ -90,21 +95,25 @@ export const useAppStore = create<AppState>()(
           user: null,
           isAuthenticated: false,
           nearestStore: null,
+          currentStore: null,
+          isManualStore: false,
+          storeMessage: "",
           cartCount: 0,
           cart: [],
         }),
 
       // Store actions
       setNearestStore: (store) => set({ nearestStore: store }),
-      setCurrentStore: (newStore) => {
+      setCurrentStore: (newStore, isManual = false) => {
         const previousStore = get().currentStore;
         // Clear cart if store changes (prevents inventory mismatch)
         if (previousStore && newStore && previousStore.id !== newStore.id) {
-          set({ currentStore: newStore, cart: [] });
+          set({ currentStore: newStore, isManualStore: isManual, cart: [] });
         } else {
-          set({ currentStore: newStore });
+          set({ currentStore: newStore, isManualStore: isManual });
         }
       },
+      setStoreMessage: (message) => set({ storeMessage: message }),
 
       // Cart actions
       addToCart: (item) => {
@@ -139,6 +148,7 @@ export const useAppStore = create<AppState>()(
         isAuthenticated: state.isAuthenticated,
         nearestStore: state.nearestStore,
         currentStore: state.currentStore,
+        isManualStore: state.isManualStore,
         cartCount: state.cartCount,
         cart: state.cart,
       }),

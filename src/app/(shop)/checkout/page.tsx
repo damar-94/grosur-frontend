@@ -44,7 +44,7 @@ type PaymentMethod = "MANUAL_TRANSFER" | "PAYMENT_GATEWAY";
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function CheckoutPage() {
-  const { user, setCartCount } = useAppStore();
+  const { user, setCartCount, currentStore, isManualStore } = useAppStore();
   const router = useRouter();
 
   // Data
@@ -494,11 +494,16 @@ export default function CheckoutPage() {
                 <span className="font-medium text-gray-400 italic text-xs">Dihitung backend</span>
               </div>
               <div className="flex justify-between text-gray-600">
-                <span>Gudang Terdekat</span>
-                <span className="font-medium text-gray-400 italic text-xs">
-                  {selectedAddress ? "Otomatis" : "Pilih alamat"}
+                <span>Dikirim Dari</span>
+                <span className="font-bold text-[#00997a] text-xs">
+                  {currentStore?.name || (selectedAddress ? "Toko Terdekat" : "Pilih alamat")}
                 </span>
               </div>
+              {isManualStore && (
+                <p className="text-[10px] text-amber-600 italic -mt-1">
+                  * Menggunakan toko pilihan Anda di Beranda
+                </p>
+              )}
             </div>
 
             {/* Total */}
