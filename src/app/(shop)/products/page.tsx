@@ -29,7 +29,7 @@ function ProductCatalogContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { addToCart, setCurrentStore } = useAppStore();
+  const { addToCart, currentStore, setCurrentStore } = useAppStore();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -119,6 +119,16 @@ function ProductCatalogContent() {
     }
   }, [fetchProducts, validStoreId]);
 
+  // SYNC: Global Store -> URL storeId
+  useEffect(() => {
+    if (currentStore?.id && currentStore.id !== storeId) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("storeId", currentStore.id);
+      params.set("page", "1"); // Reset to page 1 on store change
+      router.push(`${pathname}?${params.toString()}`);
+    }
+  }, [currentStore?.id, storeId, pathname, router, searchParams]);
+
   const updateFilters = (newFilters: { search?: string; categoryId?: string; page?: number }) => {
     const params = new URLSearchParams(searchParams.toString());
     
@@ -158,12 +168,12 @@ function ProductCatalogContent() {
     });
   };
 
-  // Sync nearest store to cart store
+  // Sync store name for local display
   useEffect(() => {
-    if (storeId) {
-      setCurrentStore({ id: storeId, name: activeStoreName });
+    if (currentStore?.name) {
+      setActiveStoreName(currentStore.name);
     }
-  }, [storeId, activeStoreName, setCurrentStore]);
+  }, [currentStore?.name]);
 
   const resetFilters = () => {
     const params = new URLSearchParams();

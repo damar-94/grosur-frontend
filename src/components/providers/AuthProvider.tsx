@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useAppStore } from "@/stores/useAppStore";
 import { api } from "@/lib/axiosInstance";
+import { useLocationStore } from "@/stores/useLocationStore";
+import { toast } from "sonner";
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
   const { setUser, setLoading, setCartCount } = useAppStore();
@@ -47,6 +49,59 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
     syncAuth();
   }, [setUser, setLoading, setCartCount]);
+
+  // --- GLOBAL STORE INITIALIZATION ---
+  const { 
+    currentStore, 
+    setCurrentStore, 
+    isManualStore, 
+    storeMessage, 
+    setStoreMessage 
+  } = useAppStore();
+  
+  const { latitude, longitude } = useLocationStore();
+  const [isSyncingStore, setIsSyncingStore] = useState(false);
+
+  useEffect(() => {
+    const fetchNearestStore = async () => {
+      if (isSyncingStore) return;
+      setIsSyncingStore(true);
+      try {
+        const response = await api.post("/stores/nearest", {
+          latitude: latitude || null,
+          longitude: longitude || null,
+        });
+
+        const store = response.data.data || response.data.store;
+        if (store) {
+          setCurrentStore({ id: store.id, name: store.name }, false);
+          setStoreMessage(response.data.message || "Melayani di sekitar lokasi Anda");
+          
+          if (!currentStore) {
+             toast.success(`Lokasi otomatis: ${store.name}`, { icon: "📍", duration: 2000 });
+          }
+        }
+      } catch (error) {
+        console.error("Global store sync failed:", error);
+      } finally {
+        setIsSyncingStore(false);
+      }
+    };
+
+    // Trigger fetch if:
+    // 1. Not in manual mode
+    // 2. We don't have a current store OR we explicitly want to refresh it (currentStore is null)
+    if (!isManualStore && !currentStore) {
+      fetchNearestStore();
+    }
+  }, [latitude, longitude, isManualStore, currentStore, setCurrentStore, setStoreMessage]);
+
+  // Handle manual message
+  useEffect(() => {
+    if (isManualStore && currentStore) {
+      setStoreMessage("Menampilkan produk dari toko pilihan Anda");
+    }
+  }, [isManualStore, currentStore, setStoreMessage]);
 
   return <>{children}</>;
 }
