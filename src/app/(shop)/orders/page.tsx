@@ -15,7 +15,7 @@ import {
   FiLoader,
   FiArrowLeft,
 } from "react-icons/fi";
-import { fetchOrders, type Order } from "@/services/checkoutService";
+import { fetchOrders, cancelExpiredOrders, type Order } from "@/services/checkoutService";
 import { useAppStore } from "@/stores/useAppStore";
 
 type OrderStatus = "ALL" | "WAITING_PAYMENT" | "WAITING_CONFIRMATION" | "PROCESSED" | "SENT" | "CONFIRMED" | "CANCELLED";
@@ -45,9 +45,11 @@ export default function OrdersPage() {
   const loadOrders = useCallback(async () => {
     setIsLoading(true);
     try {
+      await cancelExpiredOrders().catch(() => {}); // silently fail if cancel endpoint errors
       const filter = statusFilter === "ALL" ? undefined : statusFilter;
       const data = await fetchOrders({ 
         page, 
+        limit: 5,
         status: filter,
         search: searchQuery || undefined,
         date: dateFilter || undefined

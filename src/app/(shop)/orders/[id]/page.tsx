@@ -13,7 +13,7 @@ import {
   FiCreditCard,
   FiClock,
 } from "react-icons/fi";
-import { fetchOrder, type Order } from "@/services/checkoutService";
+import { fetchOrder, cancelExpiredOrders, cancelOrder as cancelOrderService, type Order } from "@/services/checkoutService";
 import { useAppStore } from "@/stores/useAppStore";
 
 export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -28,6 +28,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const loadOrder = useCallback(async () => {
     setIsLoading(true);
     try {
+      await cancelExpiredOrders().catch(() => {});
       const data = await fetchOrder(orderId);
       setOrder(data);
     } catch (err) {
@@ -37,6 +38,20 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       setIsLoading(false);
     }
   }, [orderId, router]);
+
+  const handleCancelOrder = async () => {
+    if (!confirm("Apakah Anda yakin ingin membatalkan pesanan ini?")) return;
+    setIsLoading(true);
+    try {
+      await cancelOrderService(orderId);
+      toast.success("Pesanan berhasil dibatalkan");
+      loadOrder(); // Reload the specific order to show its new status
+    } catch (err: any) {
+      const msg = err.response?.data?.message || "Gagal membatalkan pesanan";
+      toast.error(msg);
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (isAuthLoading) return;
@@ -216,12 +231,20 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                 </div>
 
                 {order.status === "WAITING_PAYMENT" && order.paymentStatus === "PENDING" && order.paymentMethod === "MANUAL_TRANSFER" && (
-                    <Link
-                      href={`/checkout/${order.id}/payment`}
-                      className="mt-6 w-full py-3 bg-[#00997a] hover:bg-[#007a61] text-white text-sm font-bold rounded-xl transition-colors block text-center shadow-sm shadow-[#00997a]/20"
-                    >
-                      Bayar Sekarang
-                    </Link>
+                    <div className="mt-6 flex flex-col gap-3">
+                      <Link
+                        href={`/checkout/${order.id}/payment`}
+                        className="w-full py-3 bg-[#00997a] hover:bg-[#007a61] text-white text-sm font-bold rounded-xl transition-colors block text-center shadow-sm shadow-[#00997a]/20"
+                      >
+                        Bayar Sekarang
+                      </Link>
+                      <button
+                        onClick={handleCancelOrder}
+                        className="w-full py-3 bg-red-50 hover:bg-red-100 text-red-600 text-sm font-bold rounded-xl transition-colors block text-center border border-red-100"
+                      >
+                        Batalkan Pesanan
+                      </button>
+                    </div>
                 )}
               </div>
             </div>

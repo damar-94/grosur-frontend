@@ -16,7 +16,7 @@ import {
   FiPackage,
   FiClock,
 } from "react-icons/fi";
-import { fetchOrder, uploadPaymentProof, type Order } from "@/services/checkoutService";
+import { fetchOrder, uploadPaymentProof, cancelOrder as cancelOrderService, type Order } from "@/services/checkoutService";
 import { useAppStore } from "@/stores/useAppStore";
 
 // ─── Bank Transfer Info ───────────────────────────────────────────────────────
@@ -205,6 +205,20 @@ export default function PaymentPage() {
     setCopiedAcc(text);
     toast.success("Nomor rekening disalin!");
     setTimeout(() => setCopiedAcc(null), 2000);
+  };
+
+  // ─── Cancel Order ─────────────────────────────────────────────────────────────
+  const handleCancelOrder = async () => {
+    if (!confirm("Apakah Anda yakin ingin membatalkan pesanan ini?")) return;
+    setIsLoading(true);
+    try {
+      await cancelOrderService(orderId as string);
+      toast.success("Pesanan berhasil dibatalkan");
+      router.push(`/orders/${orderId}`);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Gagal membatalkan pesanan");
+      setIsLoading(false);
+    }
   };
 
   // ─── Loading ──────────────────────────────────────────────────────────────────
@@ -550,6 +564,13 @@ export default function PaymentPage() {
                   Kirim Bukti Pembayaran
                 </>
               )}
+            </button>
+            <button
+              onClick={handleCancelOrder}
+              disabled={isUploading || isExpired}
+              className="mt-3 w-full py-3.5 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-xl transition-colors text-center border border-red-100 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Batalkan Pesanan
             </button>
           </div>
         </div>
