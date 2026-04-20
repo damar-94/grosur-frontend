@@ -7,7 +7,7 @@ import { api } from "@/lib/axiosInstance";
 import { ShoppingCart } from "lucide-react";
 
 export default function Header() {
-  const { user, logout, cartCount } = useAppStore();
+  const { user, logout, cartCount, cart } = useAppStore();
   const router = useRouter();
 
   const cartItemCount = cart.reduce((acc, item) => acc + item.quantity, 0);
