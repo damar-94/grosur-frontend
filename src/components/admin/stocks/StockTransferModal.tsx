@@ -4,7 +4,7 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, ArrowRight } from "lucide-react";
+import { Loader2, ArrowRight, Check, ChevronsUpDown, Search } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -32,6 +32,16 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 
 import { stockService } from "@/services/stockService";
 import { Product, productService } from "@/services/productService";
@@ -70,6 +80,7 @@ export function StockTransferModal({
   const [isLoading, setIsLoading] = React.useState(false);
   const [products, setProducts] = React.useState<Product[]>([]);
   const [isFetchingProducts, setIsFetchingProducts] = React.useState(false);
+  const [open, setOpen] = React.useState(false);
 
   const form = useForm<TransferFormValues>({
     resolver: zodResolver(transferSchema),
@@ -218,34 +229,77 @@ export function StockTransferModal({
               control={form.control}
               name="productId"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col">
                   <FormLabel>Produk Terpilih</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
-                    value={field.value} 
-                    disabled={isLoading || isFetchingProducts || !fromStoreId}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={
-                          !fromStoreId ? "Pilih sumber dahulu..." 
-                          : isFetchingProducts ? "Memuat list produk..." 
-                          : "Pilih produk dari inventori sumber..."
-                        } />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {products.map(product => (
-                        <SelectItem 
-                          key={product.id} 
-                          value={product.id}
-                          disabled={(product.inventory?.quantity || 0) <= 0}
+                  <Popover open={open} onOpenChange={setOpen}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={open}
+                          className={cn(
+                            "w-full justify-between font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                          disabled={isLoading || isFetchingProducts || !fromStoreId}
                         >
-                          {product.name} — {(product.inventory?.quantity || 0)} unit
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                          {field.value
+                            ? products.find((product) => product.id === field.value)?.name
+                            : !fromStoreId 
+                              ? "Pilih sumber dahulu..." 
+                              : isFetchingProducts 
+                                ? "Memuat list produk..." 
+                                : "Pilih produk..."}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[var(--radix-popover-trigger-width)] min-w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Cari produk..." className="h-9" />
+                        <CommandList>
+                          <CommandEmpty>Produk tidak ditemukan.</CommandEmpty>
+                          <CommandGroup>
+                            {products.map((product) => (
+                              <CommandItem
+                                key={product.id}
+                                value={product.name}
+                                onSelect={() => {
+                                  form.setValue("productId", product.id);
+                                  setOpen(false);
+                                }}
+                                disabled={(product.inventory?.quantity || 0) <= 0}
+                                className="flex items-center justify-between py-2.5 px-3 aria-selected:bg-primary/5 cursor-pointer transition-colors"
+                              >
+                                <div className="flex flex-col gap-1">
+                                  <span className="font-medium">{product.name}</span>
+                                  <div className="flex items-center gap-2">
+                                    <span className={cn(
+                                      "text-[10px] px-1.5 py-0.5 rounded-full font-semibold",
+                                      (product.inventory?.quantity || 0) > 20 
+                                        ? "bg-green-100 text-green-700" 
+                                        : (product.inventory?.quantity || 0) > 0 
+                                          ? "bg-orange-100 text-orange-700"
+                                          : "bg-red-100 text-red-700"
+                                    )}>
+                                      {(product.inventory?.quantity || 0)} Unit
+                                    </span>
+                                    <span className="text-[11px] text-muted-foreground">tersedia di inventori</span>
+                                  </div>
+                                </div>
+                                {product.id === field.value && (
+                                  <div className="bg-primary/10 p-1 rounded-full">
+                                    <Check className="h-3.5 w-3.5 text-primary" />
+                                  </div>
+                                )}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                   <FormMessage />
                 </FormItem>
               )}
