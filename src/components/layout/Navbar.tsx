@@ -15,7 +15,7 @@ import {
   FiLogOut,
   FiMapPin
 } from "react-icons/fi";
-import { useSearchParams } from "next/navigation"; 
+import { useSearchParams } from "next/navigation";
 import { useAppStore } from "@/stores/useAppStore";
 import StoreSelector from "./StoreSelector";
 
@@ -47,15 +47,15 @@ export default function Navbar() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const params = new URLSearchParams(searchParams.toString());
     if (searchQuery.trim()) {
-        params.set("search", searchQuery.trim());
+      params.set("search", searchQuery.trim());
     } else {
-        params.delete("search");
+      params.delete("search");
     }
     params.set("page", "1"); // Reset page on new search
-    
+
     router.push(`/products?${params.toString()}`);
   };
 
@@ -67,13 +67,16 @@ export default function Navbar() {
           {/* Desktop Logo */}
           <div className="flex items-center gap-4">
             <Link href="/" className="hidden md:flex items-center gap-2">
-              <span className="text-2xl font-extrabold text-primary tracking-tight">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground font-black text-xl shadow-sm">
+                G
+              </div>
+              <span className="text-2xl font-black text-primary tracking-tight">
                 Grosur
               </span>
             </Link>
-            
+
             <div className="hidden md:block">
-               <StoreSelector />
+              {/* Removed StoreSelector from Navbar */}
             </div>
           </div>
 
@@ -138,7 +141,7 @@ export default function Navbar() {
                 </Link>
 
                 <span className="text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary px-2 py-1 rounded-md">
-                   {user.role === "USER" ? "Customer" : user.role === "STORE_ADMIN" ? "Store Admin" : "Super Admin"}
+                  {user.role === "USER" ? "Customer" : user.role === "STORE_ADMIN" ? "Store Admin" : "Super Admin"}
                 </span>
 
                 {/* 💡 Tombol Khusus Admin Panel */}

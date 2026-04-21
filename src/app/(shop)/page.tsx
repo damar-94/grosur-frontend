@@ -9,10 +9,11 @@ import { api } from "@/lib/axiosInstance";
 import { FiMapPin, FiAlertCircle, FiLoader, FiArrowRight, FiShoppingBag } from "react-icons/fi";
 import Link from "next/link";
 import CategoryGrid from "@/components/CategoryGrid";
+import StoreSelector from "@/components/layout/StoreSelector";
 
 export default function HomePage() {
   const { coordinates, error: geoError, isLoading: geoLoading } = useGeolocation();
-  const { currentStore, isManualStore, storeMessage } = useAppStore();
+  const { currentStore, isManualStore, storeMessage, selectedAddress } = useAppStore();
 
   return (
     <div className="mx-auto max-w-[1200px] space-y-4 pb-20 pt-0 md:space-y-6 md:px-6 md:pt-6">
@@ -37,9 +38,22 @@ export default function HomePage() {
                 <FiMapPin className="animate-bounce" />
               </div>
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider opacity-70">Melayani di:</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider opacity-70">
+                  {(!coordinates && selectedAddress) ? `Mengirim ke: ${selectedAddress.label}` : "Melayani di:"}
+                </p>
                 <div className="flex items-center gap-1.5">
-                  <span className="font-extrabold text-base leading-tight">{currentStore.name}</span>
+                  <StoreSelector 
+                    trigger={
+                      <button className="flex flex-col items-start hover:opacity-75 transition-opacity group">
+                         <span className="font-extrabold text-base md:text-lg leading-tight border-b-2 border-transparent group-hover:border-[#00997a]">
+                           {currentStore.name}
+                         </span>
+                         {selectedAddress && (
+                           <span className="text-[10px] font-medium opacity-80 mt-0.5">Berdasarkan alamat terpilih</span>
+                         )}
+                      </button>
+                    }
+                  />
                   {isManualStore && <span className="text-[10px] bg-[#00997a] text-white px-1.5 py-0.5 rounded font-bold">Pilihan Anda</span>}
                 </div>
               </div>
@@ -47,9 +61,6 @@ export default function HomePage() {
 
             <div className="hidden md:flex flex-col items-end text-right">
               <p className="text-xs font-medium opacity-80">{storeMessage}</p>
-              <Link href="/products" className="text-[11px] font-bold underline mt-1 hover:opacity-80 transition-opacity">
-                Klik untuk ubah Lokasi
-              </Link>
             </div>
           </div>
         )}

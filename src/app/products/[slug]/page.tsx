@@ -14,7 +14,9 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/stores/useAppStore";
 
-export default function ProductDetailPage() {
+import { Suspense } from "react";
+
+function ProductDetailContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -309,6 +311,14 @@ export default function ProductDetailPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ProductDetailPage() {
+  return (
+    <Suspense fallback={<ProductDetailSkeleton />}>
+      <ProductDetailContent />
+    </Suspense>
   );
 }
 

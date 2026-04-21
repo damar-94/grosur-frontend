@@ -50,7 +50,9 @@ const months = [
 const currentYear = new Date().getFullYear();
 const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
 
-export default function StockReportPage() {
+import { Suspense } from "react";
+
+function StockReportContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -460,5 +462,13 @@ function TableSkeleton({ roles }: { roles?: string }) {
         }
       `}</style>
     </>
+  );
+}
+
+export default function StockReportPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center">Loading Report...</div>}>
+      <StockReportContent />
+    </Suspense>
   );
 }

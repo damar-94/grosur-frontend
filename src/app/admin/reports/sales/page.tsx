@@ -56,7 +56,9 @@ import {
   Line
 } from "recharts";
 
-export default function SalesReportPage() {
+import { Suspense } from "react";
+
+function SalesReportContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -798,5 +800,13 @@ function SalesReportSkeleton() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function SalesReportPage() {
+  return (
+    <Suspense fallback={<SalesReportSkeleton />}>
+      <SalesReportContent />
+    </Suspense>
   );
 }
