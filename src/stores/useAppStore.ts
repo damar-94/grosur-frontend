@@ -47,6 +47,7 @@ interface AppState {
   nearestStore: Store | null;
   cartCount: number;
   currentStore: Store | null;
+  selectedAddress: { id: string; label: string; latitude: number; longitude: number } | null;
   isManualStore: boolean;
   storeMessage: string;
 
@@ -62,6 +63,7 @@ interface AppState {
   // Actions – Store
   setNearestStore: (store: Store | null) => void;
   setCurrentStore: (store: Store | null, isManual?: boolean) => void;
+  setSelectedAddress: (address: { id: string; label: string; latitude: number; longitude: number } | null) => void;
   setStoreMessage: (message: string) => void;
 
   // Actions – Cart
@@ -80,6 +82,7 @@ export const useAppStore = create<AppState>()(
       isLoading: true,
       nearestStore: null,
       currentStore: null,
+      selectedAddress: null,
       isManualStore: false,
       storeMessage: "",
       cartCount: 0,
@@ -96,6 +99,7 @@ export const useAppStore = create<AppState>()(
           isAuthenticated: false,
           nearestStore: null,
           currentStore: null,
+          selectedAddress: null,
           isManualStore: false,
           storeMessage: "",
           cartCount: 0,
@@ -106,11 +110,29 @@ export const useAppStore = create<AppState>()(
       setNearestStore: (store) => set({ nearestStore: store }),
       setCurrentStore: (newStore, isManual = false) => {
         const previousStore = get().currentStore;
+        const manualMsg = "Menampilkan produk dari toko pilihan Anda";
+        
         // Clear cart if store changes (prevents inventory mismatch)
         if (previousStore && newStore && previousStore.id !== newStore.id) {
-          set({ currentStore: newStore, isManualStore: isManual, cart: [] });
+          set({ 
+            currentStore: newStore, 
+            isManualStore: isManual, 
+            cart: [],
+            ...(isManual ? { storeMessage: manualMsg } : {}) 
+          });
         } else {
-          set({ currentStore: newStore, isManualStore: isManual });
+          set({ 
+            currentStore: newStore, 
+            isManualStore: isManual,
+            ...(isManual ? { storeMessage: manualMsg } : {})
+          });
+        }
+      },
+      setSelectedAddress: (address) => {
+        if (address) {
+          set({ selectedAddress: address, isManualStore: false });
+        } else {
+          set({ selectedAddress: null });
         }
       },
       setStoreMessage: (message) => set({ storeMessage: message }),
@@ -149,6 +171,7 @@ export const useAppStore = create<AppState>()(
         nearestStore: state.nearestStore,
         currentStore: state.currentStore,
         isManualStore: state.isManualStore,
+        storeMessage: state.storeMessage,
         cartCount: state.cartCount,
         cart: state.cart,
       }),

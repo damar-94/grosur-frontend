@@ -16,70 +16,7 @@ export default function Footer() {
             </p>
           </div>
 
-          {/* Links Sections */}
-          <div>
-            <h4 className="font-bold mb-4 text-primary-foreground">
-              Layanan Pelanggan
-            </h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>
-                <Link
-                  href="/bantuan"
-                  className="hover:text-primary transition-colors"
-                >
-                  Pusat Bantuan
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/cara-belanja"
-                  className="hover:text-primary transition-colors"
-                >
-                  Cara Belanja
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/pengembalian"
-                  className="hover:text-primary transition-colors"
-                >
-                  Pengembalian Dana
-                </Link>
-              </li>
-            </ul>
-          </div>
 
-          <div>
-            <h4 className="font-bold mb-4 text-primary-foreground">
-              Tentang Kami
-            </h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>
-                <Link
-                  href="/about"
-                  className="hover:text-primary transition-colors"
-                >
-                  Profil Perusahaan
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/karir"
-                  className="hover:text-primary transition-colors"
-                >
-                  Karir
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/syarat"
-                  className="hover:text-primary transition-colors"
-                >
-                  Syarat & Ketentuan
-                </Link>
-              </li>
-            </ul>
-          </div>
 
           <div>
             <h4 className="font-bold mb-4 text-primary-foreground">
