@@ -1,69 +1,127 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination } from "swiper/modules";
+import { api } from "@/lib/axiosInstance";
+import Image from "next/image";
+import Link from "next/link";
 
 // Import Swiper core and required modules styles
 import "swiper/css";
 import "swiper/css/pagination";
 
-// Placeholder data (Later this can come from your backend API)
-const banners = [
-  {
-    id: 1,
-    title: "Sayuran Segar Panen Hari Ini",
-    subtitle: "Diskon spesial hingga 50% khusus di toko terdekatmu.",
-    bg: "bg-gradient-to-r from-primary to-accent",
-  },
-  {
-    id: 2,
-    title: "Gratis Ongkir Sepuasnya!",
-    subtitle: "Tanpa ribet, minimal belanja hanya Rp 50.000.",
-    bg: "bg-gradient-to-r from-orange-500 to-yellow-400",
-  },
-  {
-    id: 3,
-    title: "Daging & Ayam Premium",
-    subtitle: "Kualitas restoran, harga ramah di kantong.",
-    bg: "bg-gradient-to-r from-blue-600 to-cyan-500",
-  },
-];
+interface Banner {
+  id: string;
+  title: string;
+  subtitle?: string;
+  imageUrl?: string;
+  bgGradient?: string;
+  contentColor: string;
+  linkUrl?: string;
+  showText?: boolean;
+}
 
 export default function HeroBanner() {
+  const [banners, setBanners] = useState<Banner[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBanners = async () => {
+      try {
+        const res = await api.get("/banners");
+        setBanners(res.data.data);
+      } catch (error) {
+        console.error("Failed to fetch banners", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBanners();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="h-[100px] w-full sm:h-[150px] md:h-[200px] lg:h-[285px] md:rounded-xl bg-gray-100 animate-pulse flex items-center justify-center">
+        <p className="text-gray-400 text-sm">Memuat promo...</p>
+      </div>
+    );
+  }
+
+  // Fallback if no banners are available
+  if (banners.length === 0) {
+    return (
+      <div className="h-[100px] w-full sm:h-[150px] md:h-[200px] lg:h-[285px] md:rounded-xl bg-gradient-to-r from-primary to-accent flex flex-col justify-center px-6 md:px-16 shadow-sm">
+        <h2 className="mb-2 max-w-xl text-xl font-extrabold text-white drop-shadow-sm md:text-3xl lg:text-4xl leading-tight text-white">
+          Selamat Datang di Grosur
+        </h2>
+        <p className="max-w-md text-sm text-white/90 md:text-lg text-white">
+          Kebutuhan harianmu, diantar langsung ke pintu.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full">
       <Swiper
         modules={[Autoplay, Pagination]}
         spaceBetween={0}
         slidesPerView={1}
-        loop={true}
-        autoplay={{
+        loop={banners.length > 1}
+        autoplay={banners.length > 1 ? {
           delay: 4000,
           disableOnInteraction: false,
-        }}
-        pagination={{
+        } : false}
+        pagination={banners.length > 1 ? {
           clickable: true,
           dynamicBullets: true,
-        }}
-        // Mobile: 180px height & sharp edges. Desktop: up to 400px height & rounded corners
+        } : false}
         className="h-[100px] w-full sm:h-[150px] md:h-[200px] lg:h-[285px] md:rounded-xl shadow-sm z-0"
       >
-        {banners.map((banner) => (
-          <SwiperSlide key={banner.id}>
-            {/* The actual slide content */}
-            <div className={`flex h-full w-full flex-col justify-center px-6 md:px-16 ${banner.bg}`}>
-              <h2 className="mb-2 max-w-xl text-xl font-extrabold text-white drop-shadow-sm md:text-3xl lg:text-4xl leading-tight">
-                {banner.title}
-              </h2>
-              <p className="max-w-md text-sm text-white/90 md:text-lg">
-                {banner.subtitle}
-              </p>
+        {banners.map((banner) => {
+          const SlideContent = (
+            <div className={`relative flex h-full w-full flex-col justify-center px-6 md:px-16 overflow-hidden ${!banner.imageUrl ? banner.bgGradient : "bg-gray-100"}`}>
+              {banner.imageUrl && (
+                <Image 
+                   src={banner.imageUrl} 
+                   alt={banner.title} 
+                   fill 
+                   priority
+                   className="object-cover z-0" 
+                />
+              )}
+              
+              {/* Overlay content - always on top of image or gradient */}
+              {banner.showText !== false && (
+                <div className={`relative z-10 ${banner.contentColor}`}>
+                  <h2 className="mb-2 max-w-xl text-xl font-extrabold drop-shadow-md md:text-3xl lg:text-4xl leading-tight">
+                    {banner.title}
+                  </h2>
+                  {banner.subtitle && (
+                    <p className="max-w-md text-sm opacity-90 md:text-lg drop-shadow-md">
+                      {banner.subtitle}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
-          </SwiperSlide>
-        ))}
+          );
+
+          return (
+            <SwiperSlide key={banner.id}>
+              {banner.linkUrl ? (
+                <Link href={banner.linkUrl} className="block h-full w-full">
+                  {SlideContent}
+                </Link>
+              ) : (
+                SlideContent
+              )}
+            </SwiperSlide>
+          );
+        })}
       </Swiper>
 
-      {/* Global CSS override for Swiper Pagination Colors to match your Brand */}
       <style jsx global>{`
         .swiper-pagination-bullet {
           background-color: #ffffff;
