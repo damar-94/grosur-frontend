@@ -71,7 +71,7 @@ export default function CategoryGrid() {
     <div className="grid grid-cols-4 sm:grid-cols-4 lg:grid-cols-8 gap-3 px-4 py-4 md:px-0">
       {categories.map((cat, index) => (
         <Link 
-          href={`/products?category=${cat.id}`} 
+          href={`/products?categoryId=${cat.id}`} 
           key={cat.id} 
           className="flex flex-col items-center space-y-2 group transition-all"
         >

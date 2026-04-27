@@ -40,7 +40,7 @@ function ProductCatalogContent() {
 
   // Filters from URL
   const search = searchParams.get("search") || undefined;
-  const categoryId = searchParams.get("categoryId") || undefined;
+  const categoryId = searchParams.get("categoryId") || searchParams.get("category") || undefined;
   const page = parseInt(searchParams.get("page") || "1");
   const storeId = searchParams.get("storeId");
 
