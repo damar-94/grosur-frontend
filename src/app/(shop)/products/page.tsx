@@ -39,21 +39,35 @@ function ProductCatalogContent() {
   const [activeStoreName, setActiveStoreName] = useState<string>("");
 
   // Filters from URL
-  const search = searchParams.get("search") || undefined;
-  const categoryId = searchParams.get("categoryId") || undefined;
+  const keyword = searchParams.get("keyword") || undefined;
+  const category = searchParams.get("category") || undefined;
   const page = parseInt(searchParams.get("page") || "1");
-  const storeId = searchParams.get("storeId");
 
-  const validStoreId = storeId && storeId !== "null" && storeId !== "undefined" ? storeId : null;
+  const validStoreId = currentStore?.id || null;
 
   const fetchProducts = useCallback(async () => {
     if (!validStoreId) return;
+    
+    // Resolve category slug to ID
+    let resolvedCategoryId = category;
+    if (category && categories.length > 0) {
+      const cat = categories.find(c => c.slug === category || c.id === category);
+      if (cat) {
+        resolvedCategoryId = cat.id;
+      }
+    }
+
+    // Delay fetching if a category slug is provided but categories are not loaded yet
+    if (category && categories.length === 0) {
+      return;
+    }
+
     setIsLoading(true);
     try {
       const response = await productService.getProducts({
         storeId: validStoreId,
-        search,
-        categoryId,
+        search: keyword,
+        categoryId: resolvedCategoryId,
         page,
         limit: 12,
       });
@@ -73,28 +87,9 @@ function ProductCatalogContent() {
     } finally {
       setIsLoading(false);
     }
-  }, [storeId, search, categoryId, page]);
+  }, [validStoreId, keyword, category, page, categories]);
 
   useEffect(() => {
-    const handleStoreSelection = async () => {
-      try {
-        const response = await productService.getStores();
-        const stores = response.data;
-        if (stores && stores.length > 0) {
-          if (!validStoreId) {
-            const params = new URLSearchParams(searchParams.toString());
-            params.set("storeId", stores[0].id);
-            router.replace(`${pathname}?${params.toString()}`);
-          } else {
-            const currentStore = stores.find((s: { id: string; name: string }) => s.id === storeId);
-            if (currentStore) setActiveStoreName(currentStore.name);
-          }
-        }
-      } catch (error) {
-        console.error("Failed to fetch stores", error);
-      }
-    };
-
     const fetchCategories = async () => {
       try {
         setIsCategoriesLoading(true);
@@ -109,9 +104,8 @@ function ProductCatalogContent() {
       }
     };
 
-    handleStoreSelection();
     fetchCategories();
-  }, [storeId, pathname, router, searchParams]);
+  }, []);
 
   useEffect(() => {
     if (validStoreId) {
@@ -119,28 +113,18 @@ function ProductCatalogContent() {
     }
   }, [fetchProducts, validStoreId]);
 
-  // SYNC: Global Store -> URL storeId
-  useEffect(() => {
-    if (currentStore?.id && currentStore.id !== storeId) {
-      const params = new URLSearchParams(searchParams.toString());
-      params.set("storeId", currentStore.id);
-      params.set("page", "1"); // Reset to page 1 on store change
-      router.push(`${pathname}?${params.toString()}`);
-    }
-  }, [currentStore?.id, storeId, pathname, router, searchParams]);
-
-  const updateFilters = (newFilters: { search?: string; categoryId?: string; page?: number }) => {
+  const updateFilters = (newFilters: { keyword?: string; category?: string; page?: number }) => {
     const params = new URLSearchParams(searchParams.toString());
     
-    if (newFilters.search !== undefined) {
-      if (newFilters.search) params.set("search", newFilters.search);
-      else params.delete("search");
+    if (newFilters.keyword !== undefined) {
+      if (newFilters.keyword) params.set("keyword", newFilters.keyword);
+      else params.delete("keyword");
       params.set("page", "1"); // Reset page on search
     }
 
-    if (newFilters.categoryId !== undefined) {
-      if (newFilters.categoryId) params.set("categoryId", newFilters.categoryId);
-      else params.delete("categoryId");
+    if (newFilters.category !== undefined) {
+      if (newFilters.category) params.set("category", newFilters.category);
+      else params.delete("category");
       params.set("page", "1"); // Reset page on category change
     }
 
@@ -176,36 +160,34 @@ function ProductCatalogContent() {
   }, [currentStore?.name]);
 
   const resetFilters = () => {
-    const params = new URLSearchParams();
-    if (validStoreId) params.set("storeId", validStoreId);
-    router.push(pathname + "?" + params.toString());
+    router.push(pathname);
   };
 
-  const activeCategory = categories.find(c => c.id === categoryId);
+  const activeCategory = categories.find(c => c.slug === category || c.id === category);
 
   return (
     <div className="bg-background min-h-screen">
       {/* Search Result Banner */}
-      {(search || categoryId) && (
+      {(keyword || category) && (
         <div className="bg-card border-b">
           <div className="max-w-7xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-2 text-sm">
               <span className="text-muted-foreground">Katalog Produk</span>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              {search && (
+              {keyword && (
                 <div className="flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-1 rounded-full font-medium">
                   <Search className="h-3.5 w-3.5" />
-                  <span>Pencarian: "{search}"</span>
-                  <button onClick={() => updateFilters({ search: "" })} className="hover:bg-primary/20 p-0.5 rounded-full">
+                  <span>Pencarian: "{keyword}"</span>
+                  <button onClick={() => updateFilters({ keyword: "" })} className="hover:bg-primary/20 p-0.5 rounded-full">
                     <X className="h-3 w-3" />
                   </button>
                 </div>
               )}
-              {categoryId && (
+              {category && (
                 <div className="flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-1 rounded-full font-medium">
                   <LayoutGrid className="h-3.5 w-3.5" />
                   <span>Kategori: {activeCategory?.name || "Memuat..."}</span>
-                  <button onClick={() => updateFilters({ categoryId: "" })} className="hover:bg-primary/20 p-0.5 rounded-full">
+                  <button onClick={() => updateFilters({ category: "" })} className="hover:bg-primary/20 p-0.5 rounded-full">
                     <X className="h-3 w-3" />
                   </button>
                 </div>
@@ -233,10 +215,10 @@ function ProductCatalogContent() {
               </h3>
               <div className="space-y-1">
                 <button
-                  onClick={() => updateFilters({ categoryId: "" })}
+                  onClick={() => updateFilters({ category: "" })}
                   className={cn(
                     "w-full text-left px-3 py-2 rounded-lg text-sm transition-all",
-                    !categoryId 
+                    !category 
                       ? "bg-primary text-white font-bold shadow-md shadow-primary/20" 
                       : "hover:bg-muted text-muted-foreground hover:text-foreground"
                   )}
@@ -251,10 +233,10 @@ function ProductCatalogContent() {
                   categories.map((cat) => (
                     <button
                       key={cat.id}
-                      onClick={() => updateFilters({ categoryId: cat.id })}
+                      onClick={() => updateFilters({ category: cat.slug })}
                       className={cn(
                         "w-full text-left px-3 py-2 rounded-lg text-sm transition-all",
-                        categoryId === cat.id 
+                        (category === cat.slug || category === cat.id)
                           ? "bg-primary text-white font-bold shadow-md shadow-primary/20" 
                           : "hover:bg-muted text-muted-foreground hover:text-foreground"
                       )}
@@ -285,10 +267,10 @@ function ProductCatalogContent() {
           <div className="md:hidden overflow-x-auto no-scrollbar pb-2">
             <div className="flex gap-2 min-w-max">
               <button
-                onClick={() => updateFilters({ categoryId: "" })}
+                onClick={() => updateFilters({ category: "" })}
                 className={cn(
                   "px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all",
-                  !categoryId ? "bg-primary text-white" : "bg-card border text-muted-foreground"
+                  !category ? "bg-primary text-white" : "bg-card border text-muted-foreground"
                 )}
               >
                 Semua Produk
@@ -296,10 +278,10 @@ function ProductCatalogContent() {
               {categories.map((cat) => (
                 <button
                   key={cat.id}
-                  onClick={() => updateFilters({ categoryId: cat.id })}
+                  onClick={() => updateFilters({ category: cat.slug })}
                   className={cn(
                     "px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all",
-                    categoryId === cat.id ? "bg-primary text-white" : "bg-card border text-muted-foreground"
+                    (category === cat.slug || category === cat.id) ? "bg-primary text-white" : "bg-card border text-muted-foreground"
                   )}
                 >
                   {cat.name}
@@ -312,7 +294,7 @@ function ProductCatalogContent() {
           <div className="flex-1">
             <div className="flex items-center justify-between mb-6">
               <h1 className="text-2xl font-black text-foreground tracking-tight">
-                {search ? `Hasil untuk "${search}"` : activeCategory?.name || "Katalog Produk"}
+                {keyword ? `Hasil untuk "${keyword}"` : activeCategory?.name || "Katalog Produk"}
               </h1>
               {pagination && (
                 <p className="text-sm text-muted-foreground font-medium">

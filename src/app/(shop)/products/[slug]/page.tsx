@@ -21,9 +21,9 @@ function ProductDetailContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const slug = params.slug as string;
-  const storeId = searchParams.get("storeId");
+  const { addToCart, setCurrentStore, cart, currentStore, isLoading: isStoreLoading } = useAppStore();
 
-  const { addToCart, setCurrentStore, cart } = useAppStore();
+  const storeId = searchParams.get("storeId") || currentStore?.id;
 
   const [product, setProduct] = React.useState<Product | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -32,6 +32,8 @@ function ProductDetailContent() {
 
   React.useEffect(() => {
     const fetchData = async () => {
+      if (isStoreLoading) return; // Wait for Zustand to hydrate
+
       if (!slug || !storeId) {
         setLoading(false);
         return;
@@ -64,7 +66,7 @@ function ProductDetailContent() {
     };
 
     fetchData();
-  }, [slug, storeId, setCurrentStore]);
+  }, [slug, storeId, setCurrentStore, isStoreLoading]);
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -97,7 +99,7 @@ function ProductDetailContent() {
   const cartItem = cart.find((c) => c.productId === product?.id);
   const cartQty = cartItem?.quantity ?? 0;
 
-  if (loading) return <ProductDetailSkeleton />;
+  if (loading || isStoreLoading) return <ProductDetailSkeleton />;
 
   if (!product) {
     return (

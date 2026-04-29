@@ -66,13 +66,14 @@ export function ProductFormFields({
                   Rp
                 </span>
                 <Input
-                  type="number"
-                  min={0}
-                  step={1}
+                  type="text"
                   placeholder="0"
                   className="pl-9"
-                  value={field.value}
-                  onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                  value={field.value ? field.value.toString() : ""}
+                  onChange={(e) => {
+                    const rawValue = e.target.value.replace(/\D/g, "");
+                    field.onChange(rawValue ? parseInt(rawValue, 10) : "");
+                  }}
                   onBlur={field.onBlur}
                   name={field.name}
                   ref={field.ref}

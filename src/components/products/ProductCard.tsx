@@ -39,7 +39,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
 
   return (
     <Card className="h-full flex flex-col overflow-hidden group hover:border-primary/50 transition-colors">
-      <Link href={`/products/${product.slug}?storeId=${product.inventory.storeId}`} className="flex-1 flex flex-col">
+      <Link href={`/products/${product.slug}`} className="flex-1 flex flex-col">
         <CardHeader className="p-0 relative aspect-square overflow-hidden bg-muted">
           {product.image ? (
             <Image

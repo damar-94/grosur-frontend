@@ -59,16 +59,30 @@ export default function CreateProductPage() {
     },
   });
 
+  // Sync Store ID when user state hydrates
+  useEffect(() => {
+    if (!selectedStoreId) {
+      if (user?.role === "STORE_ADMIN" && user.managedStore?.id) {
+        setSelectedStoreId(user.managedStore.id);
+      } else if (user?.role === "SUPER_ADMIN" && currentStore?.id) {
+        setSelectedStoreId(currentStore.id);
+      }
+    }
+  }, [user, currentStore, selectedStoreId]);
+
   // Load categories and stores on mount
   useEffect(() => {
+    let isMounted = true;
     (async () => {
       try {
         const catRes = await productService.getCategories();
+        if (!isMounted) return;
         setCategories(catRes.data);
         
-        if (isSuperAdmin) {
+        if (user?.role === "SUPER_ADMIN") {
           setStoresLoading(true);
           const storeRes = await productService.getStores();
+          if (!isMounted) return;
           if (storeRes.success) {
             setStores(storeRes.data);
             // If no store selected from global state, pick the first one
@@ -79,13 +93,17 @@ export default function CreateProductPage() {
           }
         }
       } catch {
-        toast.error("Gagal memuat data pendukung");
+        if (isMounted) toast.error("Gagal memuat data pendukung");
       } finally {
-        setCategoriesLoading(false);
-        setStoresLoading(false);
+        if (isMounted) {
+          setCategoriesLoading(false);
+          setStoresLoading(false);
+        }
       }
     })();
-  }, [isSuperAdmin, selectedStoreId, setCurrentStore]);
+
+    return () => { isMounted = false; };
+  }, [user?.role, selectedStoreId, setCurrentStore]);
 
   const handleStoreChange = (val: string) => {
     setSelectedStoreId(val);

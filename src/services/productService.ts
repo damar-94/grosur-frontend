@@ -164,7 +164,7 @@ export const productService = {
 
   /** Fetch a single product by ID (used by Edit page) */
   getProductById: async (productId: string): Promise<AdminProductDetailResponse> => {
-    const response = await api.get(`/products/${productId}`);
+    const response = await api.get(`/products/admin/${productId}`);
     return response.data;
   },
 

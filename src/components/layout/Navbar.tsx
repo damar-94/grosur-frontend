@@ -22,12 +22,12 @@ import StoreSelector from "./StoreSelector";
 export default function Navbar() {
   const { user, setUser, cartCount } = useAppStore();
   const searchParams = useSearchParams(); // 💡 Added useSearchParams
-  const [searchQuery, setSearchQuery] = React.useState(searchParams.get("search") || "");
+  const [searchQuery, setSearchQuery] = React.useState(searchParams.get("keyword") || "");
   const router = useRouter();
 
   // Keep search input in sync with URL
   React.useEffect(() => {
-    setSearchQuery(searchParams.get("search") || "");
+    setSearchQuery(searchParams.get("keyword") || "");
   }, [searchParams]);
 
   // 💡 THE FIX: Full-stack logout logic
@@ -50,9 +50,9 @@ export default function Navbar() {
 
     const params = new URLSearchParams(searchParams.toString());
     if (searchQuery.trim()) {
-      params.set("search", searchQuery.trim());
+      params.set("keyword", searchQuery.trim());
     } else {
-      params.delete("search");
+      params.delete("keyword");
     }
     params.set("page", "1"); // Reset page on new search
 

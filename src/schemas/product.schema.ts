@@ -19,8 +19,8 @@ export const productFormSchema = z.object({
     .min(2, "Nama produk minimal 2 karakter")
     .max(100, "Nama produk maksimal 100 karakter"),
 
-  price: z
-    .number({ message: "Harga harus berupa angka" })
+  price: z.coerce
+    .number({ invalid_type_error: "Harga harus berupa angka" })
     .positive("Harga harus lebih dari 0")
     .int("Harga harus berupa bilangan bulat"),
 

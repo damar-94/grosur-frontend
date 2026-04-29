@@ -23,6 +23,13 @@ import {
 } from "@/services/productService";
 import { ProductFormFields } from "@/components/admin/products/ProductFormFields";
 import { ImageDropzone } from "@/components/admin/products/ImageDropzone";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAppStore } from "@/stores/useAppStore";
 
 interface EditProductPageProps {
@@ -34,9 +41,17 @@ export default function EditProductPage({ params }: EditProductPageProps) {
   const router = useRouter();
   const { user, currentStore } = useAppStore();
   
-  const storeId = user?.role === "STORE_ADMIN"
+  const isSuperAdmin = user?.role === "SUPER_ADMIN";
+  
+  const initialStoreId = user?.role === "STORE_ADMIN"
     ? (user?.managedStore?.id ?? "")
     : (currentStore?.id ?? "");
+
+  const [stores, setStores] = useState<{ id: string; name: string }[]>([]);
+  const [storesLoading, setStoresLoading] = useState(false);
+  const [selectedStoreId, setSelectedStoreId] = useState<string>(initialStoreId);
+
+  const storeId = selectedStoreId;
 
   const [product, setProduct] = useState<AdminProduct | null>(null);
   const [pageLoading, setPageLoading] = useState(true);
@@ -96,7 +111,45 @@ export default function EditProductPage({ params }: EditProductPageProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productId]);
 
+  // Sync Store ID when user state hydrates
+  useEffect(() => {
+    if (!selectedStoreId) {
+      if (user?.role === "STORE_ADMIN" && user.managedStore?.id) {
+        setSelectedStoreId(user.managedStore.id);
+      } else if (user?.role === "SUPER_ADMIN" && currentStore?.id) {
+        setSelectedStoreId(currentStore.id);
+      }
+    }
+  }, [user, currentStore, selectedStoreId]);
+
+  // Fetch stores for Super Admin
+  useEffect(() => {
+    let isMounted = true;
+    if (user?.role === "SUPER_ADMIN" && stores.length === 0) {
+      setStoresLoading(true);
+      productService.getStores()
+        .then((storeRes) => {
+          if (!isMounted) return;
+          if (storeRes.success) {
+            setStores(storeRes.data);
+            if (!selectedStoreId && storeRes.data.length > 0) {
+              setSelectedStoreId(storeRes.data[0].id);
+            }
+          }
+        })
+        .catch(console.error)
+        .finally(() => {
+          if (isMounted) setStoresLoading(false);
+        });
+    }
+    return () => { isMounted = false; };
+  }, [user?.role, stores.length, selectedStoreId]);
+
   // ── Handlers ──────────────────────────────────────────────────────────────
+
+  const handleStoreChange = (val: string) => {
+    setSelectedStoreId(val);
+  };
 
   const handleRemoveExisting = (imageId: string) => {
     // Optimistically remove from UI — actual deletion can be added if a
@@ -195,9 +248,29 @@ export default function EditProductPage({ params }: EditProductPageProps) {
         </Button>
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Edit Produk</h1>
-          <p className="text-sm text-muted-foreground truncate max-w-xs">
-            {product?.name}
-          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-sm text-muted-foreground">Toko:</span>
+            {isSuperAdmin ? (
+              <Select
+                value={selectedStoreId}
+                onValueChange={handleStoreChange}
+                disabled={storesLoading}
+              >
+                <SelectTrigger className="h-7 w-[200px] text-xs font-semibold bg-white">
+                  <SelectValue placeholder="Pilih Toko" />
+                </SelectTrigger>
+                <SelectContent>
+                  {stores.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <span className="text-sm font-semibold text-foreground">
+                {user?.managedStore?.name || "Toko Regional"}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 

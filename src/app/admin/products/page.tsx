@@ -140,9 +140,9 @@ export default function AdminProductsPage() {
 
   const handleDelete = async (product: AdminProduct) => {
     if (!storeId) return;
-    setIsDeleting(product.id);
+    setIsDeleting(product.slug);
     try {
-      await productService.adminDeleteProduct(product.id, storeId);
+      await productService.adminDeleteProduct(product.slug, storeId);
       toast.success(`"${product.name}" berhasil dihapus`);
       fetchProducts(page);
     } catch (err: unknown) {
@@ -319,7 +319,7 @@ export default function AdminProductsPage() {
                               variant="ghost"
                               size="icon"
                               onClick={() =>
-                                router.push(`/admin/products/${product.id}/edit`)
+                                router.push(`/admin/products/${product.slug}/edit`)
                               }
                             >
                               <Pencil className="h-4 w-4" />
@@ -331,7 +331,7 @@ export default function AdminProductsPage() {
                                   variant="ghost"
                                   size="icon"
                                   className="text-destructive hover:text-destructive"
-                                  disabled={isDeleting === product.id}
+                                  disabled={isDeleting === product.slug}
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
