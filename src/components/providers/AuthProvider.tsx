@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+
 import { useAppStore } from "@/stores/useAppStore";
 import { api } from "@/lib/axiosInstance";
 import { useLocationStore } from "@/stores/useLocationStore";
@@ -62,6 +63,16 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   
   const { latitude: geoLat, longitude: geoLng } = useLocationStore();
   const [isSyncingStore, setIsSyncingStore] = useState(false);
+  const lastNotifiedStoreId = useRef<string | null>(null);
+
+  // Initialize ref with current store id to prevent toast on first load if already set
+  useEffect(() => {
+    if (currentStore?.id && !lastNotifiedStoreId.current) {
+      lastNotifiedStoreId.current = currentStore.id;
+    }
+  }, [currentStore?.id]);
+
+
 
   useEffect(() => {
     const fetchNearestStore = async () => {
@@ -79,7 +90,16 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
         const store = response.data.data || response.data.store;
         if (store) {
-          setCurrentStore({ id: store.id, name: store.name }, false);
+          const isStoreChanged = !currentStore || currentStore.id !== store.id;
+          
+          if (isStoreChanged && lastNotifiedStoreId.current !== store.id) {
+            setCurrentStore({ id: store.id, name: store.name }, false);
+            
+            // Show toast ONLY when the store actually changes and we haven't notified for this ID yet
+            toast.success(`Lokasi otomatis: ${store.name}`, { icon: "📍", duration: 2000 });
+            lastNotifiedStoreId.current = store.id;
+          }
+
           
           // Refine message based on source
           let msg = response.data.message || "Melayani di sekitar lokasi Anda";
@@ -93,7 +113,6 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
               msg = `Melayani pengiriman ke ${selectedAddress.label}`;
             }
           } else if (isUsingGeo) {
-            // If using geolocation, keep it simple
             if (msg.includes("toko utama")) {
               msg = "Lokasi di luar jangkauan (50km), menggunakan toko pusat";
             } else {
@@ -102,10 +121,6 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
           }
           
           setStoreMessage(msg);
-          
-          if (!currentStore) {
-             toast.success(`Lokasi otomatis: ${store.name}`, { icon: "📍", duration: 2000 });
-          }
         }
       } catch (error) {
         console.error("Global store sync failed:", error);
@@ -116,8 +131,8 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
     // Trigger fetch if:
     // 1. Not in manual mode (Store selection)
-    // 2. We don't have a current store OR we have a selected address we need to sync with
-    if (!isManualStore && (!currentStore || selectedAddress)) {
+    // 2. We have new coordinates (Geo or Address) OR we don't have a store yet
+    if (!isManualStore && (!currentStore || geoLat || selectedAddress)) {
       fetchNearestStore();
     }
   }, [geoLat, geoLng, isManualStore, currentStore, setCurrentStore, setStoreMessage, selectedAddress]);

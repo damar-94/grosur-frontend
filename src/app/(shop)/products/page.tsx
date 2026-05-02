@@ -39,8 +39,8 @@ function ProductCatalogContent() {
   const [activeStoreName, setActiveStoreName] = useState<string>("");
 
   // Filters from URL
-  const keyword = searchParams.get("keyword") || undefined;
-  const category = searchParams.get("category") || undefined;
+  const search = searchParams.get("search") || searchParams.get("keyword") || undefined;
+  const categoryId = searchParams.get("categoryId") || searchParams.get("category") || undefined;
   const page = parseInt(searchParams.get("page") || "1");
 
   const validStoreId = currentStore?.id || null;
@@ -49,16 +49,16 @@ function ProductCatalogContent() {
     if (!validStoreId) return;
     
     // Resolve category slug to ID
-    let resolvedCategoryId = category;
-    if (category && categories.length > 0) {
-      const cat = categories.find(c => c.slug === category || c.id === category);
+    let resolvedCategoryId = categoryId;
+    if (categoryId && categories.length > 0) {
+      const cat = categories.find(c => c.slug === categoryId || c.id === categoryId);
       if (cat) {
         resolvedCategoryId = cat.id;
       }
     }
 
     // Delay fetching if a category slug is provided but categories are not loaded yet
-    if (category && categories.length === 0) {
+    if (categoryId && categories.length === 0) {
       return;
     }
 
@@ -66,7 +66,7 @@ function ProductCatalogContent() {
     try {
       const response = await productService.getProducts({
         storeId: validStoreId,
-        search: keyword,
+        search: search,
         categoryId: resolvedCategoryId,
         page,
         limit: 12,
@@ -87,7 +87,7 @@ function ProductCatalogContent() {
     } finally {
       setIsLoading(false);
     }
-  }, [validStoreId, keyword, category, page, categories]);
+  }, [validStoreId, search, categoryId, page, categories]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -113,18 +113,28 @@ function ProductCatalogContent() {
     }
   }, [fetchProducts, validStoreId]);
 
-  const updateFilters = (newFilters: { keyword?: string; category?: string; page?: number }) => {
+  const updateFilters = (newFilters: { search?: string; categoryId?: string; page?: number }) => {
     const params = new URLSearchParams(searchParams.toString());
     
-    if (newFilters.keyword !== undefined) {
-      if (newFilters.keyword) params.set("keyword", newFilters.keyword);
-      else params.delete("keyword");
+    if (newFilters.search !== undefined) {
+      if (newFilters.search) {
+        params.set("search", newFilters.search);
+        params.delete("keyword"); // Cleanup old param
+      } else {
+        params.delete("search");
+        params.delete("keyword");
+      }
       params.set("page", "1"); // Reset page on search
     }
 
-    if (newFilters.category !== undefined) {
-      if (newFilters.category) params.set("category", newFilters.category);
-      else params.delete("category");
+    if (newFilters.categoryId !== undefined) {
+      if (newFilters.categoryId) {
+        params.set("categoryId", newFilters.categoryId);
+        params.delete("category"); // Cleanup old param
+      } else {
+        params.delete("categoryId");
+        params.delete("category");
+      }
       params.set("page", "1"); // Reset page on category change
     }
 
@@ -163,31 +173,31 @@ function ProductCatalogContent() {
     router.push(pathname);
   };
 
-  const activeCategory = categories.find(c => c.slug === category || c.id === category);
+  const activeCategory = categories.find(c => c.slug === categoryId || c.id === categoryId);
 
   return (
     <div className="bg-background min-h-screen">
       {/* Search Result Banner */}
-      {(keyword || category) && (
+      {(search || categoryId) && (
         <div className="bg-card border-b">
           <div className="max-w-7xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-2 text-sm">
               <span className="text-muted-foreground">Katalog Produk</span>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              {keyword && (
+              {search && (
                 <div className="flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-1 rounded-full font-medium">
                   <Search className="h-3.5 w-3.5" />
-                  <span>Pencarian: "{keyword}"</span>
-                  <button onClick={() => updateFilters({ keyword: "" })} className="hover:bg-primary/20 p-0.5 rounded-full">
+                  <span>Pencarian: "{search}"</span>
+                  <button onClick={() => updateFilters({ search: "" })} className="hover:bg-primary/20 p-0.5 rounded-full">
                     <X className="h-3 w-3" />
                   </button>
                 </div>
               )}
-              {category && (
+              {categoryId && (
                 <div className="flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-1 rounded-full font-medium">
                   <LayoutGrid className="h-3.5 w-3.5" />
                   <span>Kategori: {activeCategory?.name || "Memuat..."}</span>
-                  <button onClick={() => updateFilters({ category: "" })} className="hover:bg-primary/20 p-0.5 rounded-full">
+                  <button onClick={() => updateFilters({ categoryId: "" })} className="hover:bg-primary/20 p-0.5 rounded-full">
                     <X className="h-3 w-3" />
                   </button>
                 </div>
@@ -215,10 +225,10 @@ function ProductCatalogContent() {
               </h3>
               <div className="space-y-1">
                 <button
-                  onClick={() => updateFilters({ category: "" })}
+                  onClick={() => updateFilters({ categoryId: "" })}
                   className={cn(
                     "w-full text-left px-3 py-2 rounded-lg text-sm transition-all",
-                    !category 
+                    !categoryId 
                       ? "bg-primary text-white font-bold shadow-md shadow-primary/20" 
                       : "hover:bg-muted text-muted-foreground hover:text-foreground"
                   )}
@@ -233,10 +243,10 @@ function ProductCatalogContent() {
                   categories.map((cat) => (
                     <button
                       key={cat.id}
-                      onClick={() => updateFilters({ category: cat.slug })}
+                      onClick={() => updateFilters({ categoryId: cat.slug })}
                       className={cn(
                         "w-full text-left px-3 py-2 rounded-lg text-sm transition-all",
-                        (category === cat.slug || category === cat.id)
+                        (categoryId === cat.slug || categoryId === cat.id)
                           ? "bg-primary text-white font-bold shadow-md shadow-primary/20" 
                           : "hover:bg-muted text-muted-foreground hover:text-foreground"
                       )}
@@ -267,10 +277,10 @@ function ProductCatalogContent() {
           <div className="md:hidden overflow-x-auto no-scrollbar pb-2">
             <div className="flex gap-2 min-w-max">
               <button
-                onClick={() => updateFilters({ category: "" })}
+                onClick={() => updateFilters({ categoryId: "" })}
                 className={cn(
                   "px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all",
-                  !category ? "bg-primary text-white" : "bg-card border text-muted-foreground"
+                  !categoryId ? "bg-primary text-white" : "bg-card border text-muted-foreground"
                 )}
               >
                 Semua Produk
@@ -278,10 +288,10 @@ function ProductCatalogContent() {
               {categories.map((cat) => (
                 <button
                   key={cat.id}
-                  onClick={() => updateFilters({ category: cat.slug })}
+                  onClick={() => updateFilters({ categoryId: cat.slug })}
                   className={cn(
                     "px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all",
-                    (category === cat.slug || category === cat.id) ? "bg-primary text-white" : "bg-card border text-muted-foreground"
+                    (categoryId === cat.slug || categoryId === cat.id) ? "bg-primary text-white" : "bg-card border text-muted-foreground"
                   )}
                 >
                   {cat.name}
@@ -294,7 +304,7 @@ function ProductCatalogContent() {
           <div className="flex-1">
             <div className="flex items-center justify-between mb-6">
               <h1 className="text-2xl font-black text-foreground tracking-tight">
-                {keyword ? `Hasil untuk "${keyword}"` : activeCategory?.name || "Katalog Produk"}
+                {search ? `Hasil untuk "${search}"` : activeCategory?.name || "Katalog Produk"}
               </h1>
               {pagination && (
                 <p className="text-sm text-muted-foreground font-medium">
