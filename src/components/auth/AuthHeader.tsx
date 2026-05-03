@@ -23,10 +23,10 @@ export default function AuthHeader({ title }: AuthHeaderProps) {
         </div>
 
         {/* Right side: Help Link */}
-        <Link href="/help" className="flex items-center gap-1.5 text-sm font-medium text-[#00997a] hover:text-[#007a61] transition-colors">
+        <a href="mailto:support@grosur.com" className="flex items-center gap-1.5 text-sm font-medium text-[#00997a] hover:text-[#007a61] transition-colors">
           <HelpCircle size={16} />
           <span className="hidden sm:inline">Butuh bantuan?</span>
-        </Link>
+        </a>
       </div>
     </header>
   );
