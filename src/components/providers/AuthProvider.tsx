@@ -62,7 +62,6 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   } = useAppStore();
   
   const { latitude: geoLat, longitude: geoLng } = useLocationStore();
-  const [isSyncingStore, setIsSyncingStore] = useState(false);
   const lastNotifiedStoreId = useRef<string | null>(null);
 
   // Initialize ref with current store id to prevent toast on first load if already set
@@ -72,11 +71,14 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     }
   }, [currentStore?.id]);
 
-
-
   useEffect(() => {
     const fetchNearestStore = async () => {
-      if (isSyncingStore) return;
+      // Small artificial delay for Vercel Cold Starts
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      const { isSyncingStore, setIsSyncingStore } = useAppStore.getState();
+      if (isSyncingStore && currentStore) return; // if already syncing and we have a store
+      
       setIsSyncingStore(true);
       try {
         // Priority: Browser geolocation coords > selectedAddress coords (Default behavior)
@@ -125,7 +127,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
       } catch (error) {
         console.error("Global store sync failed:", error);
       } finally {
-        setIsSyncingStore(false);
+        useAppStore.getState().setIsSyncingStore(false);
       }
     };
 
