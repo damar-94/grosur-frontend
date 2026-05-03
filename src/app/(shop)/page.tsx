@@ -13,7 +13,7 @@ import StoreSelector from "@/components/layout/StoreSelector";
 
 export default function HomePage() {
   const { coordinates, error: geoError, isLoading: geoLoading } = useGeolocation();
-  const { currentStore, isManualStore, storeMessage, selectedAddress } = useAppStore();
+  const { currentStore, isManualStore, storeMessage, selectedAddress, isSyncingStore } = useAppStore();
 
   return (
     <div className="mx-auto max-w-[1200px] space-y-4 pb-20 pt-0 md:space-y-6 md:px-6 md:pt-6">
@@ -93,7 +93,12 @@ export default function HomePage() {
 
         {currentStore ? (
           <ProductGrid storeId={currentStore.id} limit={10} />
-        ) : !geoLoading && (
+        ) : isSyncingStore || geoLoading ? (
+          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground animate-pulse">
+            <FiLoader className="animate-spin mb-2" size={24} />
+            <p className="text-sm">Menyiapkan toko terdekat...</p>
+          </div>
+        ) : (
           <div className="text-center py-12 bg-red-50 rounded-xl border border-red-100 text-red-600">
             Gagal memuat toko. Mohon izinkan lokasi atau pilih toko secara manual.
           </div>

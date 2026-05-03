@@ -49,6 +49,7 @@ interface AppState {
   currentStore: Store | null;
   selectedAddress: { id: string; label: string; latitude: number; longitude: number } | null;
   isManualStore: boolean;
+  isSyncingStore: boolean;
   storeMessage: string;
 
   // Cart
@@ -65,6 +66,7 @@ interface AppState {
   setCurrentStore: (store: Store | null, isManual?: boolean) => void;
   setSelectedAddress: (address: { id: string; label: string; latitude: number; longitude: number } | null) => void;
   setStoreMessage: (message: string) => void;
+  setIsSyncingStore: (isSyncing: boolean) => void;
 
   // Actions – Cart
   addToCart: (item: CartItem) => void;
@@ -84,6 +86,7 @@ export const useAppStore = create<AppState>()(
       currentStore: null,
       selectedAddress: null,
       isManualStore: false,
+      isSyncingStore: true, // true by default so UI waits on mount
       storeMessage: "",
       cartCount: 0,
       cart: [],
@@ -136,6 +139,7 @@ export const useAppStore = create<AppState>()(
         }
       },
       setStoreMessage: (message) => set({ storeMessage: message }),
+      setIsSyncingStore: (isSyncing) => set({ isSyncingStore: isSyncing }),
 
       // Cart actions
       addToCart: (item) => {
