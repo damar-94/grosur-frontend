@@ -190,7 +190,7 @@ export default function Navbar() {
           </Link>
 
           <Link
-            href="/categories"
+            href="/products"
             className="flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-primary transition-colors"
           >
             <FiGrid size={20} />
