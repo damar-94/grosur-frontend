@@ -5,7 +5,18 @@ import { api } from "@/lib/axiosInstance";
 import RoleGuard from "@/components/auth/RoleGuard";
 
 import BannerManagement from "@/components/profile/BannerManagement";
-import { Store as StoreIcon, Image as ImageIcon } from "lucide-react";
+import { Store as StoreIcon, Image as ImageIcon, Trash2, CheckCircle2, AlertCircle } from "lucide-react";
+import { toast } from "sonner";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Store {
     id: string;
@@ -22,10 +33,30 @@ export default function StoreManagementPage() {
     const [showModal, setShowModal] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
+    // --- Edit State ---
+    const [isEditing, setIsEditing] = useState(false);
+    const [editId, setEditId] = useState<string | null>(null);
+
+
     // --- Assign Admin State ---
     const [showAssignModal, setShowAssignModal] = useState(false);
     const [users, setUsers] = useState<any[]>([]);
     const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
+
+    // --- Confirm Dialog State ---
+    const [confirmDialog, setConfirmDialog] = useState<{
+        open: boolean;
+        title: string;
+        description: string;
+        action: () => void;
+        variant?: "default" | "destructive";
+    }>({
+        open: false,
+        title: "",
+        description: "",
+        action: () => { },
+    });
+
 
     // --- Form State (Updated to match Prisma Schema) ---
     const [provinces, setProvinces] = useState<any[]>([]);
@@ -39,7 +70,25 @@ export default function StoreManagementPage() {
         latitude: 0,
         longitude: 0,
         isActive: true,
+        isMain: false
     });
+
+    const resetForm = () => {
+        setFormData({
+            name: "",
+            address: "",
+            district: "",
+            province: "",
+            city: "",
+            latitude: 0,
+            longitude: 0,
+            isActive: true,
+            isMain: false
+        });
+        setIsEditing(false);
+        setEditId(null);
+    };
+
 
     const fetchStores = async () => {
         try {
@@ -72,23 +121,75 @@ export default function StoreManagementPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await api.post("/stores", {
+            const payload = {
                 ...formData,
                 latitude: parseFloat(formData.latitude.toString()),
                 longitude: parseFloat(formData.longitude.toString()),
-            });
-            alert("Cabang berhasil ditambahkan!");
+            };
+
+            if (isEditing && editId) {
+                await api.patch(`/stores/${editId}`, payload);
+                toast.success("Cabang berhasil diperbarui!");
+            } else {
+                await api.post("/stores", payload);
+                toast.success("Cabang berhasil ditambahkan!");
+            }
+            
             setShowModal(false);
+            resetForm();
             fetchStores();
-        } catch (e: any) { alert(e.response?.data?.message || "Gagal menambah cabang"); }
+        } catch (e: any) { toast.error(e.response?.data?.message || "Gagal menyimpan cabang"); }
     };
 
+
+    const handleEdit = (store: any) => {
+        setFormData({
+            name: store.name,
+            address: store.address,
+            district: store.district,
+            province: store.province,
+            city: store.city,
+            latitude: store.latitude,
+            longitude: store.longitude,
+            isActive: store.isActive,
+            isMain: store.isMain
+        });
+        setIsEditing(true);
+        setEditId(store.id);
+        setShowModal(true);
+    };
+
+    const handleSetMain = async (id: string) => {
+        setConfirmDialog({
+            open: true,
+            title: "Jadikan Toko Pusat?",
+            description: "Cabang ini akan menjadi toko utama. Toko pusat sebelumnya akan digantikan.",
+            action: async () => {
+                try {
+                    await api.patch(`/stores/${id}/set-main`);
+                    toast.success("Toko pusat berhasil diperbarui!");
+                    fetchStores();
+                } catch (e: any) { toast.error(e.response?.data?.message || "Gagal mengatur toko pusat"); }
+            },
+            variant: "default"
+        });
+    };
+
+
     const handleDelete = async (id: string) => {
-        if (!confirm("Yakin ingin menghapus cabang ini?")) return;
-        try {
-            await api.delete(`/stores/${id}`);
-            fetchStores();
-        } catch (e) { alert("Gagal menghapus cabang"); }
+        setConfirmDialog({
+            open: true,
+            title: "Hapus Cabang?",
+            description: "Tindakan ini tidak dapat dibatalkan. Semua data terkait cabang ini akan dihapus.",
+            action: async () => {
+                try {
+                    await api.delete(`/stores/${id}`);
+                    toast.success("Cabang berhasil dihapus");
+                    fetchStores();
+                } catch (e) { toast.error("Gagal menghapus cabang"); }
+            },
+            variant: "destructive"
+        });
     };
 
     // --- ASSIGN ADMIN ACTIONS ---
@@ -108,11 +209,12 @@ export default function StoreManagementPage() {
     const handleAssignAdmin = async (userId: string) => {
         try {
             await api.patch(`/stores/${selectedStoreId}/assign`, { userId });
-            alert("Admin berhasil ditugaskan!");
+            toast.success("Admin berhasil ditugaskan!");
             setShowAssignModal(false);
             fetchStores();
-        } catch (e) { alert("Gagal menugaskan admin"); }
+        } catch (e) { toast.error("Gagal menugaskan admin"); }
     };
+
 
     return (
         <RoleGuard allowedRoles={["SUPER_ADMIN"]}>
@@ -155,7 +257,7 @@ export default function StoreManagementPage() {
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-xl font-bold text-gray-800">Daftar Cabang</h2>
                             <button
-                                onClick={() => setShowModal(true)}
+                                onClick={() => { resetForm(); setShowModal(true); }}
                                 className="bg-[#00997a] text-white px-5 py-2.5 rounded-xl font-bold hover:bg-[#007a61] transition shadow-sm flex items-center gap-2 text-sm"
                             >
                                 <StoreIcon size={16} /> + Tambah Cabang
@@ -198,6 +300,14 @@ export default function StoreManagementPage() {
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 text-right flex flex-col sm:flex-row justify-end items-end sm:items-center gap-2 sm:gap-4">
+                                                {!store.isMain && (
+                                                    <button onClick={() => handleSetMain(store.id)} className="text-xs font-bold text-amber-600 hover:text-amber-800 transition-colors uppercase tracking-tight">
+                                                        Set Pusat
+                                                    </button>
+                                                )}
+                                                <button onClick={() => handleEdit(store)} className="text-xs font-bold text-[#00997a] hover:text-[#007a61] transition-colors uppercase tracking-tight">
+                                                    Edit
+                                                </button>
                                                 <button onClick={() => openAssignModal(store.id)} className="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors uppercase tracking-tight">
                                                     Tugaskan Admin
                                                 </button>
@@ -224,12 +334,12 @@ export default function StoreManagementPage() {
                 {showModal && (
                     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4 backdrop-blur-sm">
                         <div className="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl max-h-[90vh] overflow-y-auto animate-in zoom-in duration-200">
-                            <h2 className="text-2xl font-black mb-6 text-gray-900">Tambah Cabang Baru</h2>
+                            <h2 className="text-2xl font-black mb-6 text-gray-900">{isEditing ? "Edit Cabang" : "Tambah Cabang Baru"}</h2>
                             <form onSubmit={handleSubmit} className="space-y-5">
                                 <div className="space-y-1">
                                     <label className="text-xs font-bold text-gray-500 uppercase ml-1">Informasi Dasar</label>
-                                    <input type="text" placeholder="Nama Cabang" required className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#59cfb7]/20 outline-none transition-all" onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
-                                    <input type="text" placeholder="Alamat Lengkap" required className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#59cfb7]/20 outline-none transition-all" onChange={(e) => setFormData({ ...formData, address: e.target.value })} />
+                                    <input type="text" placeholder="Nama Cabang" value={formData.name} required className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#59cfb7]/20 outline-none transition-all" onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+                                    <input type="text" placeholder="Alamat Lengkap" value={formData.address} required className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#59cfb7]/20 outline-none transition-all" onChange={(e) => setFormData({ ...formData, address: e.target.value })} />
                                 </div>
 
                                 <div className="space-y-1">
@@ -242,25 +352,49 @@ export default function StoreManagementPage() {
                                         <option value="">Pilih Kota</option>
                                         {cities.map((c: any) => <option key={c.city_id} value={c.city_id}>{c.city_name}</option>)}
                                     </select>
-                                    <input type="text" placeholder="Kecamatan (District)" required className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#59cfb7]/20 outline-none transition-all" onChange={(e) => setFormData({ ...formData, district: e.target.value })} />
+                                    <input type="text" placeholder="Kecamatan (District)" value={formData.district} required className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#59cfb7]/20 outline-none transition-all" onChange={(e) => setFormData({ ...formData, district: e.target.value })} />
                                 </div>
 
                                 <div className="space-y-1">
                                     <label className="text-xs font-bold text-gray-500 uppercase ml-1">Koordinat (Peta)</label>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <input type="number" step="any" placeholder="Lat" required className="p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#59cfb7]/20 outline-none transition-all" onChange={(e) => setFormData({ ...formData, latitude: Number(e.target.value) })} />
-                                        <input type="number" step="any" placeholder="Long" required className="p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#59cfb7]/20 outline-none transition-all" onChange={(e) => setFormData({ ...formData, longitude: Number(e.target.value) })} />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <span className="text-[10px] font-bold text-gray-400 ml-1">Latitude</span>
+                                            <input 
+                                                type="number" 
+                                                step="any" 
+                                                placeholder="-7.792..." 
+                                                value={formData.latitude} 
+                                                required 
+                                                className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#59cfb7]/20 outline-none transition-all" 
+                                                onChange={(e) => setFormData({ ...formData, latitude: Number(e.target.value) })} 
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <span className="text-[10px] font-bold text-gray-400 ml-1">Longitude</span>
+                                            <input 
+                                                type="number" 
+                                                step="any" 
+                                                placeholder="110.365..." 
+                                                value={formData.longitude} 
+                                                required 
+                                                className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#59cfb7]/20 outline-none transition-all" 
+                                                onChange={(e) => setFormData({ ...formData, longitude: Number(e.target.value) })} 
+                                            />
+                                        </div>
                                     </div>
                                 </div>
 
+
                                 <div className="flex gap-3 pt-6 border-t border-gray-100">
-                                    <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-3 text-gray-500 font-bold hover:bg-gray-50 rounded-xl transition-colors">Batal</button>
-                                    <button type="submit" className="flex-1 py-3 bg-[#00997a] text-white font-black rounded-xl hover:bg-[#007a61] transition-all shadow-md">Simpan Cabang</button>
+                                    <button type="button" onClick={() => { setShowModal(false); resetForm(); }} className="flex-1 py-3 text-gray-500 font-bold hover:bg-gray-50 rounded-xl transition-colors">Batal</button>
+                                    <button type="submit" className="flex-1 py-3 bg-[#00997a] text-white font-black rounded-xl hover:bg-[#007a61] transition-all shadow-md">{isEditing ? "Perbarui" : "Simpan Cabang"}</button>
                                 </div>
                             </form>
                         </div>
                     </div>
                 )}
+
 
                 {/* --- ASSIGN ADMIN MODAL --- */}
                 {showAssignModal && (
@@ -293,8 +427,32 @@ export default function StoreManagementPage() {
                         </div>
                     </div>
                 )}
+                {/* --- SHARED CONFIRM DIALOG (AlertDialog) --- */}
+
+                <AlertDialog open={confirmDialog.open} onOpenChange={(open) => setConfirmDialog(prev => ({ ...prev, open }))}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle className="flex items-center gap-2">
+                                {confirmDialog.variant === "destructive" ? <AlertCircle className="text-red-500" size={20} /> : <CheckCircle2 className="text-[#00997a]" size={20} />}
+                                {confirmDialog.title}
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                                {confirmDialog.description}
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Batal</AlertDialogCancel>
+                            <AlertDialogAction
+                                onClick={confirmDialog.action}
+                                className={confirmDialog.variant === "destructive" ? "bg-red-600 hover:bg-red-700" : "bg-[#00997a] hover:bg-[#007a61]"}
+                            >
+                                Lanjutkan
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
 
             </div>
         </RoleGuard>
     );
-}
+}
