@@ -4,8 +4,9 @@ import { useAppStore } from "@/stores/useAppStore";
 import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 // 💡 Swapped Menu/X for ChevronDown to make an accordion-style toggle
-import { User, Receipt, Bell, Ticket, Edit2, ChevronDown, LayoutDashboard } from "lucide-react";
+import { User, Receipt, Bell, Ticket, Edit2, ChevronDown, LayoutDashboard, LogOut } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import ReferralCard from "@/components/profile/ReferralCard";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -24,6 +25,8 @@ interface ProfileFormValues {
 export default function ProfilePage() {
     const user = useAppStore((state) => state.user);
     const setUser = useAppStore((state) => state.setUser);
+    const logout = useAppStore((state) => state.logout);
+    const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
 
     // File handling
@@ -106,6 +109,17 @@ export default function ProfilePage() {
         setIsMobileMenuOpen(false);
     };
 
+    const handleLogout = async () => {
+        try {
+            await api.post("/auth/logout");
+        } catch (error) {
+            console.error("Logout failed", error);
+        } finally {
+            logout();
+            router.push("/login");
+        }
+    };
+
     if (!user) return <div className="p-8 text-center text-gray-500">Memuat profil...</div>;
 
     const displayPhotoUrl = preview || user.profilePicture || "/default-avatar.png";
@@ -183,14 +197,14 @@ export default function ProfilePage() {
                                 </ul>
                             </div>
 
-                            <div className="flex items-center gap-2 text-gray-700 hover:text-[#00997a] font-medium cursor-pointer transition-colors">
+                            <Link href="/orders" className="flex items-center gap-2 text-gray-700 hover:text-[#00997a] font-medium cursor-pointer transition-colors">
                                 <Receipt size={20} className="text-blue-500" /> Pesanan Saya
-                            </div>
-                            <div className="flex items-center gap-2 text-gray-700 hover:text-[#00997a] font-medium cursor-pointer transition-colors">
-                                <Bell size={20} className="text-orange-500" /> Notifikasi
-                            </div>
-                            <div className="flex items-center gap-2 text-gray-700 hover:text-[#00997a] font-medium cursor-pointer transition-colors">
-                                <Ticket size={20} className="text-red-500" /> Voucher Saya
+                            </Link>
+                            <div 
+                                onClick={handleLogout}
+                                className="flex items-center gap-2 text-red-600 hover:text-red-700 font-bold cursor-pointer transition-colors pt-4 mt-4 border-t border-gray-100"
+                            >
+                                <LogOut size={20} /> Keluar
                             </div>
 
                             {/* 💡 Admin Shortcuts */}

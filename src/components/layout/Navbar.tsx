@@ -194,7 +194,7 @@ export default function Navbar() {
             className="flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-primary transition-colors"
           >
             <FiGrid size={20} />
-            <span className="text-[10px] font-medium">Kategori</span>
+            <span className="text-[10px] font-medium">Katalog</span>
           </Link>
 
           <Link
