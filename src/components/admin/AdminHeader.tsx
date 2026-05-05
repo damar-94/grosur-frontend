@@ -35,6 +35,8 @@ export function AdminHeader() {
     try {
       await api.post("/auth/logout");
       logout();
+      // Clear the cookie so Next.js Edge Middleware knows the user has logged out
+      document.cookie = "access_token=; path=/; max-age=0";
       router.push("/login");
     } catch (error) {
       console.error("Logout failed", error);
