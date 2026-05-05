@@ -84,7 +84,7 @@ export default function AdminDashboard() {
           </p>
         </div>
         <Link href="/admin/reports/sales">
-          <Button className="bg-[#00997a] hover:bg-[#00856a] text-white shadow-lg shadow-[#00997a]/20 group">
+          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 group">
             Lihat Laporan Lengkap
             <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
           </Button>
@@ -96,7 +96,7 @@ export default function AdminDashboard() {
         <StatsCard
           title="Total Pendapatan"
           value={formatCurrency(summary?.totalRevenue || 0)}
-          icon={<DollarSign className="h-5 w-5 text-[#00997a]" />}
+          icon={<DollarSign className="h-5 w-5 text-primary" />}
           description="+12% dari bulan lalu"
           trend="up"
         />
@@ -142,10 +142,10 @@ export default function AdminDashboard() {
                       x2="0"
                       y2="1"
                     >
-                      <stop offset="5%" stopColor="#00997a" stopOpacity={0.8} />
+                      <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.8} />
                       <stop
                         offset="95%"
-                        stopColor="#00997a"
+                        stopColor="var(--primary)"
                         stopOpacity={0.1}
                       />
                     </linearGradient>

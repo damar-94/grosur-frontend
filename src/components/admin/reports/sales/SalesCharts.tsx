@@ -38,7 +38,7 @@ export function SalesCharts({ trends, formatCurrency }: SalesChartsProps) {
               <Tooltip
                 formatter={(value) => [formatCurrency(Number(value)), "Pendapatan"]}
               />
-              <Bar dataKey="revenue" fill="#00997a" name="Pendapatan" />
+              <Bar dataKey="revenue" fill="var(--primary)" name="Pendapatan" />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>
@@ -59,7 +59,7 @@ export function SalesCharts({ trends, formatCurrency }: SalesChartsProps) {
               <Line
                 type="monotone"
                 dataKey="orders"
-                stroke="#00997a"
+                stroke="var(--primary)"
                 strokeWidth={2}
                 name="Jumlah Order"
               />
