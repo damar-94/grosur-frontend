@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export function proxy(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const token = request.cookies.get("access_token")?.value;
   const { pathname } = request.nextUrl;
 
@@ -12,9 +12,14 @@ export function proxy(request: NextRequest) {
     }
 
     try {
-      // Simple JWT decode for Edge Runtime
-      const payloadBase64 = token.split(".")[1];
+      // Simple JWT decode for Edge Runtime (fix base64url encoding)
+      let payloadBase64 = token.split(".")[1];
       if (!payloadBase64) throw new Error("Invalid token");
+      
+      // Fix base64url padding and characters for atob
+      payloadBase64 = payloadBase64.replace(/-/g, "+").replace(/_/g, "/");
+      const padLength = (4 - (payloadBase64.length % 4)) % 4;
+      payloadBase64 += "=".repeat(padLength);
       
       const payload = JSON.parse(atob(payloadBase64));
       const role = payload.role;
