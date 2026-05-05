@@ -2,8 +2,18 @@
 
 import { useEffect, useState, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { Search, Filter, RotateCcw } from "lucide-react";
+import { Search, Filter, RotateCcw, UserPlus } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +28,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { adminService, PaginationData, User, UserListParams } from "@/services/adminService";
 import { UserTable } from "@/components/admin/UserTable";
+import { UserDialog } from "@/components/admin/UserDialog";
 
 function UsersListContent() {
   const router = useRouter();
@@ -27,6 +38,15 @@ function UsersListContent() {
   const [users, setUsers] = useState<User[]>([]);
   const [pagination, setPagination] = useState<PaginationData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Dialog states
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  
+  // Delete confirm state
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
   // Sync state with URL params
   const page = searchParams.get("page") || "1";
@@ -97,6 +117,12 @@ function UsersListContent() {
             View and monitor all registered accounts in the system.
           </p>
         </div>
+        <Button onClick={() => {
+            setSelectedUser(null);
+            setIsDialogOpen(true);
+        }}>
+            <UserPlus className="mr-2 h-4 w-4" /> Add User
+        </Button>
       </div>
 
       <Card>
@@ -193,10 +219,75 @@ function UsersListContent() {
               users={users}
               pagination={pagination || { page: 1, totalPage: 1, totalRows: 0 }}
               onPageChange={(p) => updateFilters({ page: p.toString() })}
+              onEdit={(user) => {
+                setSelectedUser(user);
+                setIsDialogOpen(true);
+              }}
+              onDelete={(user) => {
+                setUserToDelete(user);
+                setIsDeleteAlertOpen(true);
+              }}
             />
           )}
         </CardContent>
       </Card>
+
+      {/* Add/Edit Dialog */}
+      <UserDialog
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        user={selectedUser}
+        isLoading={isSubmitting}
+        onSubmit={async (data) => {
+            setIsSubmitting(true);
+            try {
+                if (selectedUser) {
+                    await adminService.updateUser(selectedUser.id, data);
+                    toast.success("User updated successfully");
+                } else {
+                    await adminService.createUser(data);
+                    toast.success("User created successfully");
+                }
+                setIsDialogOpen(false);
+                fetchUsers();
+            } catch (error: any) {
+                toast.error(error.response?.data?.message || "Operation failed");
+            } finally {
+                setIsSubmitting(false);
+            }
+        }}
+      />
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the user
+              account for <span className="font-bold">{userToDelete?.email}</span>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={async () => {
+                    if (!userToDelete) return;
+                    try {
+                        await adminService.deleteUser(userToDelete.id);
+                        toast.success("User deleted successfully");
+                        fetchUsers();
+                    } catch (error: any) {
+                        toast.error(error.response?.data?.message || "Failed to delete user");
+                    }
+                }}
+            >
+                Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

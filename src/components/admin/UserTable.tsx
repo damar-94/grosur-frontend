@@ -16,6 +16,14 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { MoreVertical, Edit, Trash2 } from "lucide-react";
 
 export interface User {
   id: string;
@@ -34,6 +42,8 @@ interface UserTableProps {
     totalRows: number;
   };
   onPageChange: (page: number) => void;
+  onEdit: (user: User) => void;
+  onDelete: (user: User) => void;
 }
 
 const formatDate = (dateString: string) => {
@@ -45,7 +55,7 @@ const formatDate = (dateString: string) => {
   });
 };
 
-export function UserTable({ users, pagination, onPageChange }: UserTableProps) {
+export function UserTable({ users, pagination, onPageChange, onEdit, onDelete }: UserTableProps) {
   return (
     <div className="space-y-4">
       <div className="rounded-md border">
@@ -57,6 +67,7 @@ export function UserTable({ users, pagination, onPageChange }: UserTableProps) {
               <TableHead>Role</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Joined At</TableHead>
+              <TableHead className="w-[80px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -83,6 +94,26 @@ export function UserTable({ users, pagination, onPageChange }: UserTableProps) {
                   </TableCell>
                   <TableCell>
                     {formatDate(user.createdAt)}
+                  </TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => onEdit(user)}>
+                          <Edit className="mr-2 h-4 w-4" /> Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          className="text-destructive focus:text-destructive" 
+                          onClick={() => onDelete(user)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" /> Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))
