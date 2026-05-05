@@ -30,7 +30,14 @@ function LoginForm() {
       const res = await api.post("/auth/signin", data);
 
       const userData = res.data.data.user;
+      const token = res.data.data.token;
+      
       setUser(userData); // Save to Zustand
+      
+      // Set the token as a cookie on the frontend domain for the Edge Middleware
+      if (token) {
+        document.cookie = `access_token=${token}; path=/; max-age=86400; secure; samesite=lax`;
+      }
 
       // Role-based redirection
       if (userData.role === "SUPER_ADMIN" || userData.role === "STORE_ADMIN") {
@@ -54,7 +61,14 @@ function LoginForm() {
 
       // Based on our auth.controller.ts, user data is inside res.data.data.user
       const userData = res.data.data.user;
+      const token = res.data.data.token;
+      
       setUser(userData);
+      
+      // Set the token as a cookie on the frontend domain for the Edge Middleware
+      if (token) {
+        document.cookie = `access_token=${token}; path=/; max-age=86400; secure; samesite=lax`;
+      }
 
       if (userData.role === "SUPER_ADMIN") router.push("/admin/dashboard");
       else if (userData.role === "STORE_ADMIN") router.push("/store-admin/dashboard");
