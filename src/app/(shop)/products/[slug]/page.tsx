@@ -34,7 +34,9 @@ function ProductDetailContent() {
     const fetchData = async () => {
       if (isStoreLoading) return; // Wait for Zustand to hydrate
 
-      if (!slug || !storeId) {
+      const isInvalidStoreId = !storeId || storeId === "undefined" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(storeId);
+
+      if (!slug || isInvalidStoreId) {
         setLoading(false);
         return;
       }

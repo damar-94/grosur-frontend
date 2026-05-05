@@ -6,6 +6,7 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Product } from "@/services/productService";
+import { isExternalRetailer } from "@/lib/utils";
 
 interface ProductCardProps {
   product: Product;
@@ -48,6 +49,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               className="object-cover transition-transform group-hover:scale-105"
+              unoptimized={isExternalRetailer(product.image)}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-muted-foreground">

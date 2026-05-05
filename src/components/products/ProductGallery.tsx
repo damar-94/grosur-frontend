@@ -3,7 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import useEmblaCarousel from "embla-carousel-react";
-import { cn } from "@/lib/utils";
+import { cn, isExternalRetailer } from "@/lib/utils";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -55,6 +55,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
                   sizes="(max-width: 1024px) 100vw, 50vw"
                   className="object-cover"
                   priority
+                  unoptimized={isExternalRetailer(image.url)}
                 />
               </div>
             ))}
@@ -100,6 +101,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
                 alt={`${productName} thumbnail ${index + 1}`}
                 fill
                 className="object-cover"
+                unoptimized={isExternalRetailer(image.url)}
               />
             </button>
           ))}
