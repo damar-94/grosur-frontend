@@ -24,15 +24,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { MoreVertical, Edit, Trash2 } from "lucide-react";
+import { User } from "@/services/adminService";
 
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  isVerified: boolean;
-  createdAt: string;
-}
 
 interface UserTableProps {
   users: User[];
