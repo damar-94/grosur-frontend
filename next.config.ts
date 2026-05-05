@@ -27,6 +27,14 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "down-id.img.susercontent.com",
       },
+      {
+        protocol: "https",
+        hostname: "c.alfagift.id",
+      },
+      {
+        protocol: "https",
+        hostname: "cdn-klik.klikindomaret.com",
+      },
     ],
   },
 };
